@@ -1,24 +1,24 @@
 import 'package:flutter/material.dart';
+import 'login.dart';
 
 void main() {
-  runApp(const MoodJourneyApp());
+  runApp(MoodJourneyApp()); 
 }
 
 class MoodJourneyApp extends StatelessWidget {
-  const MoodJourneyApp({super.key});
-
   @override
   Widget build(BuildContext context) {
-    return const MaterialApp(
+    return MaterialApp( 
       debugShowCheckedModeBanner: false,
-      home: MoodJourneyHome(),
+      routes: {
+        '/': (context) => MoodJourneyHome(),  
+        '/login': (context) => LoginPage(),   
+      },
     );
   }
 }
 
 class MoodJourneyHome extends StatelessWidget {
-  const MoodJourneyHome({super.key});
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -58,18 +58,17 @@ class MoodJourneyHome extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 ElevatedButton(
-                   style: ElevatedButton.styleFrom(
+                  style: ElevatedButton.styleFrom(
                     backgroundColor: const Color(0xFFBA68C8),
                     minimumSize: const Size(120, 50),
                   ),
                   onPressed: () {
-                    // Ação para o botão da esquerda
+                    Navigator.pushNamed(context, '/login');
                   },
                   child: const Text(
                     'Entrar',
-                    style: TextStyle(fontSize: 16, color: Colors.black)
+                    style: TextStyle(fontSize: 16, color: Colors.black),
                   ),
-                  
                 ),
                 OutlinedButton(
                   style: OutlinedButton.styleFrom(
