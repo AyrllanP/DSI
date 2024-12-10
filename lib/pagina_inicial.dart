@@ -22,52 +22,54 @@ class MoodJourneyHome extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Container(
-        color: const Color(0xFFF8EAF6),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            const Spacer(flex: 2),
-            Column(
-              children: [
-                Container(
-                  height: 100,
-                  width: 100,
-                  decoration: BoxDecoration(
-                    color: Colors.black,
-                    borderRadius: BorderRadius.circular(20),
+      body: Column(
+        children: [
+          // Conteúdo principal no centro
+          Expanded(
+            child: Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  // Imagem do logo
+                  Image.asset(
+                    'assets/logo.png',
+                    height: 120,
                   ),
-                  child: Center(
-                    child: Icon(
-                      Icons.flight,
-                      color: Colors.purple.shade200,
-                      size: 50,
+                  const SizedBox(height: 20), // Espaço
+                  // Nome do app
+                  const Text(
+                    'Mood\nJourney',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      fontFamily: 'Poppins',
+                      fontSize: 32,
+                      fontWeight: FontWeight.bold,
+                      color: Color(0xFF221736),
                     ),
                   ),
-                ),
-                const SizedBox(height: 16),
-                const Text(
-                  "Mood Journey",
-                  style: TextStyle(
-                    fontSize: 24,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.black,
-                  ),
-                ),
-              ],
+                ],
+              ),
             ),
-            const Spacer(flex: 3),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+          ),
+          // Botões na parte inferior
+          Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 ElevatedButton(
-                  style: ElevatedButton.styleFrom(
+                   style: ElevatedButton.styleFrom(
                     backgroundColor: const Color(0xFFBA68C8),
                     minimumSize: const Size(120, 50),
                   ),
-                  onPressed: () {},
-                  child: const Text("Entrar",
-                      style: TextStyle(fontSize: 16, color: Colors.black)),
+                  onPressed: () {
+                    // Ação para o botão da esquerda
+                  },
+                  child: const Text(
+                    'Entrar',
+                    style: TextStyle(fontSize: 16, color: Colors.black)
+                  ),
+                  
                 ),
                 OutlinedButton(
                   style: OutlinedButton.styleFrom(
@@ -82,9 +84,8 @@ class MoodJourneyHome extends StatelessWidget {
                 ),
               ],
             ),
-            const SizedBox(height: 20),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
