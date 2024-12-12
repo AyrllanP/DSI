@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 
 class LoginPage extends StatelessWidget {
-  // Para o formulário
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
 
   LoginPage({super.key});
@@ -9,95 +8,84 @@ class LoginPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Column(
-        children: [
-          Expanded(
-            child: Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  // Imagem do logo
-                  Image.asset(
-                    'assets/logo.png',
-                    height: 80,
-                  ),
-                  const SizedBox(height: 20),
-                  // Nome do app
-                  const Text(
-                    'Mood\nJourney',
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      fontFamily: 'Poppins',
-                      fontSize: 26,
-                      fontWeight: FontWeight.bold,
-                      color: Color(0xFF221736),
+      body: Container(
+        color: const Color.fromARGB(255, 250, 247,
+            250), // Fundo lilás claro, igual à página de cadastro
+        child: Center(
+          child: SingleChildScrollView(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                // Logo e título
+                Column(
+                  children: [
+                    Image.asset(
+                      'assets/logo.png',
+                      height: 120,
                     ),
-                  ),
-                  const SizedBox(height: 40),
+                    const SizedBox(height: 16),
+                    const Text(
+                      "Mood Journey",
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        fontFamily: 'Poppins',
+                        fontSize: 32,
+                        fontWeight: FontWeight.bold,
+                        color: Color(0xFF221736),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 32),
 
-                  // Inputs de texto
-                  Form(
+                // Formulário de Login
+                Padding(
+                  padding: const EdgeInsets.all(16.0),
+                  child: Form(
                     key: _formKey,
                     child: Column(
-                      children: <Widget>[
-                        const Text(
-                          'Nome de usuário ou email:',
-                          style: TextStyle(
-                            fontFamily: 'Poppins',
-                            fontSize: 12,
-                            color: Color(0xFF221736),
+                      children: [
+                        // Campo de Nome de Usuário ou Email
+                        TextFormField(
+                          decoration: InputDecoration(
+                            labelText: "Nome de usuário ou e-mail:",
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(8),
+                            ),
                           ),
+                          validator: (value) {
+                            if (value == null || value.isEmpty) {
+                              return 'Insira seu nome de usuário ou e-mail';
+                            }
+                            return null;
+                          },
                         ),
-                        const SizedBox(height: 8), 
-                        SizedBox(
-                            width: 300, 
-                            child: TextFormField(
-                              decoration: const InputDecoration(
-                                hintText: "Digite seu nome",
-                                border: OutlineInputBorder(),
-                              ),
-                            validator: (value) {
-                              if (value == null || value.isEmpty) {
-                                return 'Insira seu nome de usuário ou email';
-                              }
-                              return null;
-                            },
+                        const SizedBox(height: 16),
+
+                        // Campo de Senha
+                        TextFormField(
+                          obscureText: true,
+                          decoration: InputDecoration(
+                            labelText: "Senha:",
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            suffixIcon: const Icon(Icons.visibility_off),
                           ),
+                          validator: (value) {
+                            if (value == null || value.isEmpty) {
+                              return 'Insira sua senha';
+                            }
+                            return null;
+                          },
                         ),
-                        const SizedBox(height: 16), 
+                        const SizedBox(height: 16),
 
-                        const Text(
-                          'Senha:',
-                          style: TextStyle(
-                            fontFamily: 'Poppins',
-                            fontSize: 12,
-                            color: Color(0xFF221736),
-                          ),
-                        ),
-                        const SizedBox(height: 8), // Espaço entre label e campo
-                        SizedBox(
-                            width: 300,
-                            child: TextFormField(
-                              decoration: const InputDecoration(
-                                hintText: "Digite sua senha",
-                                border: OutlineInputBorder(),
-                              ),
-                            validator: (value) {
-                              if (value == null || value.isEmpty) {
-                                return 'Insira sua senha';
-                              }
-                              return null;
-                            },
-                          )
-                        ),
-
-                        const SizedBox(height: 20), // Espaço entre os campos
-
-                        
+                        // Botão de Envio
                         ElevatedButton(
                           style: ElevatedButton.styleFrom(
                             backgroundColor: const Color(0xFFBA68C8),
-                            minimumSize: const Size(120, 50),
+                            minimumSize: const Size(double.infinity, 50),
                           ),
                           onPressed: () {
                             if (_formKey.currentState?.validate() ?? false) {
@@ -107,18 +95,21 @@ class LoginPage extends StatelessWidget {
                             }
                           },
                           child: const Text(
-                            "Enviar",
-                            style: TextStyle(fontSize: 16, color: Colors.black),
+                            "Entrar",
+                            style: TextStyle(
+                              fontSize: 16,
+                              color: Colors.white,
                             ),
+                          ),
                         ),
                       ],
                     ),
-                  )
-                ],
-              ),
+                  ),
+                ),
+              ],
             ),
           ),
-        ],
+        ),
       ),
     );
   }

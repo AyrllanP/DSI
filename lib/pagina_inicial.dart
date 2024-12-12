@@ -1,42 +1,46 @@
 import 'package:flutter/material.dart';
+import 'cadastro.dart'; // Importe a nova página
 import 'login.dart';
 
 void main() {
-  runApp(MoodJourneyApp()); 
+  runApp(const MoodJourneyApp());
 }
 
 class MoodJourneyApp extends StatelessWidget {
+  const MoodJourneyApp({super.key});
+
   @override
   Widget build(BuildContext context) {
-    return MaterialApp( 
+    return MaterialApp(
       debugShowCheckedModeBanner: false,
       routes: {
-        '/': (context) => MoodJourneyHome(),  
-        '/login': (context) => LoginPage(),   
+        '/': (context) => const MoodJourneyHome(),
+        '/login': (context) => LoginPage(),
+        '/cadastro': (context) =>
+            const CadastroPage(), // Rota para a página de cadastro
       },
     );
   }
 }
 
 class MoodJourneyHome extends StatelessWidget {
+  const MoodJourneyHome({super.key});
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       body: Column(
         children: [
-          // Conteúdo principal no centro
           Expanded(
             child: Center(
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  // Imagem do logo
                   Image.asset(
                     'assets/logo.png',
                     height: 120,
                   ),
-                  const SizedBox(height: 20), // Espaço
-                  // Nome do app
+                  const SizedBox(height: 20),
                   const Text(
                     'Mood\nJourney',
                     textAlign: TextAlign.center,
@@ -51,7 +55,6 @@ class MoodJourneyHome extends StatelessWidget {
               ),
             ),
           ),
-          // Botões na parte inferior
           Padding(
             padding: const EdgeInsets.all(16.0),
             child: Row(
@@ -59,7 +62,7 @@ class MoodJourneyHome extends StatelessWidget {
               children: [
                 ElevatedButton(
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFFBA68C8),
+                    backgroundColor: const Color.fromARGB(255, 186, 104, 200),
                     minimumSize: const Size(120, 50),
                   ),
                   onPressed: () {
@@ -75,7 +78,10 @@ class MoodJourneyHome extends StatelessWidget {
                     side: const BorderSide(color: Colors.black),
                     minimumSize: const Size(120, 50),
                   ),
-                  onPressed: () {},
+                  onPressed: () {
+                    Navigator.pushNamed(context,
+                        '/cadastro'); // Navega para a página de cadastro
+                  },
                   child: const Text(
                     "Cadastro",
                     style: TextStyle(fontSize: 16, color: Colors.black),
