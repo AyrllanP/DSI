@@ -1,112 +1,128 @@
 import 'package:flutter/material.dart';
 
-class CadastroPage extends StatelessWidget {
-  const CadastroPage({super.key});
+class CadastroPage extends StatefulWidget {
+  @override
+  _CadastroPageState createState() => _CadastroPageState();
+}
+
+class _CadastroPageState extends State<CadastroPage> {
+  final _formKey = GlobalKey<FormState>();
+  final TextEditingController _nomeController = TextEditingController();
+  final TextEditingController _emailController = TextEditingController();
+  final TextEditingController _senhaController = TextEditingController();
+
+  // Função de validação para o campo de nome
+  String? validarNome(String? value) {
+    if (value == null || value.isEmpty) {
+      return "O nome não pode ser vazio";
+    }
+    if (value.length < 4) {
+      return "O nome é muito curto";
+    }
+    return null;
+  }
+
+  // Função de validação para o campo de email
+  String? validarEmail(String? value) {
+    if (value == null || value.isEmpty) {
+      return "O email não pode ser vazio";
+    }
+    if (value.length < 5) {
+      return "Email inválido";
+    }
+    if (!value.contains('@')) {
+      return "O email não é válido";
+    }
+    return null;
+  }
+
+  // Função de validação para o campo de senha
+  String? validarSenha(String? value) {
+    if (value == null || value.isEmpty) {
+      return "A senha não pode ser vazia";
+    }
+    if (value.length < 4) {
+      return "A senha precisa ter no mínimo 4 caracteres";
+    }
+    return null;
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Container(
-        color: const Color.fromARGB(
-            255, 250, 247, 250), // Cor de fundo lilás claro em toda a tela
-        child: Center(
-          child: SingleChildScrollView(
+      appBar: AppBar(
+        title: const Text('Cadastro'),
+      ),
+      body: Center(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16.0),
+          child: Form(
+            key: _formKey,
             child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
+              mainAxisAlignment:
+                  MainAxisAlignment.center, // Centraliza os campos na tela
+              crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                // Logo e título
-                Column(
-                  children: [
-                    Image.asset(
-                      'assets/logo.png',
-                      height: 120,
-                    ),
-                    const SizedBox(height: 16),
-                    const Text(
-                      "Mood Journey",
-                      textAlign: TextAlign.center,
-                      style: TextStyle(
-                        fontFamily: 'Poppins',
-                        fontSize: 32,
-                        fontWeight: FontWeight.bold,
-                        color: Color(0xFF221736),
-                      ),
-                    ),
-                  ],
+                // Campo Nome
+                TextFormField(
+                  controller: _nomeController,
+                  decoration: InputDecoration(
+                    labelText: 'Nome',
+                    contentPadding:
+                        EdgeInsets.symmetric(vertical: 10.0, horizontal: 15.0),
+                    border: UnderlineInputBorder(),
+                  ),
+                  validator: validarNome,
                 ),
-                const SizedBox(height: 32),
+                SizedBox(height: 20), // Espaço entre os campos
 
-                // Campos de entrada e botão de cadastro
-                Padding(
-                  padding: const EdgeInsets.all(16.0),
-                  child: Column(
-                    children: [
-                      // Campo de Nome de Usuário
-                      TextField(
-                        decoration: InputDecoration(
-                          labelText: "Nome de usuário:",
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                        ),
-                      ),
-                      const SizedBox(height: 16),
+                // Campo Email
+                TextFormField(
+                  controller: _emailController,
+                  decoration: InputDecoration(
+                    labelText: 'Email',
+                    contentPadding:
+                        EdgeInsets.symmetric(vertical: 10.0, horizontal: 15.0),
+                    border: UnderlineInputBorder(),
+                  ),
+                  keyboardType: TextInputType.emailAddress,
+                  validator: validarEmail,
+                ),
+                SizedBox(height: 20), // Espaço entre os campos
 
-                      // Campo de E-mail
-                      TextField(
-                        decoration: InputDecoration(
-                          labelText: "E-mail:",
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                        ),
-                      ),
-                      const SizedBox(height: 16),
+                // Campo Senha
+                TextFormField(
+                  controller: _senhaController,
+                  decoration: InputDecoration(
+                    labelText: 'Senha',
+                    contentPadding:
+                        EdgeInsets.symmetric(vertical: 10.0, horizontal: 15.0),
+                    border: UnderlineInputBorder(),
+                  ),
+                  obscureText: true,
+                  validator: validarSenha,
+                ),
+                SizedBox(height: 30), // Espaço entre os campos e o botão
 
-                      // Campo de Senha
-                      TextField(
-                        obscureText: true,
-                        decoration: InputDecoration(
-                          labelText: "Senha:",
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          suffixIcon: const Icon(Icons.visibility_off),
-                        ),
-                      ),
-                      const SizedBox(height: 16),
-
-                      // Checkbox "Aceito os termos de uso"
-                      Row(
-                        children: [
-                          Checkbox(
-                            value:
-                                false, // Pode ser gerenciado por um StatefulWidget
-                            onChanged: (bool? value) {},
-                          ),
-                          const Text("Aceito os termos de uso"),
-                        ],
-                      ),
-                      const SizedBox(height: 16),
-
-                      // Botão "Cadastrar-se"
-                      ElevatedButton(
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xFFBA68C8),
-                          minimumSize: const Size(double.infinity, 50),
-                        ),
-                        onPressed: () {
-                          // Lógica de cadastro
-                        },
-                        child: const Text(
-                          "Cadastrar-se",
-                          style: TextStyle(
-                            fontSize: 16,
-                            color: Colors.white,
-                          ),
-                        ),
-                      ),
-                    ],
+                // Botão de Cadastro
+                ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor:
+                        Color.fromARGB(255, 186, 104, 200), // Cor do botão
+                    padding: EdgeInsets.symmetric(vertical: 15.0),
+                  ),
+                  onPressed: () {
+                    if (_formKey.currentState?.validate() ?? false) {
+                      // Processar os dados (por exemplo, fazer cadastro)
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                            content: Text('Cadastro realizado com sucesso')),
+                      );
+                    }
+                  },
+                  child: const Text(
+                    'Cadastrar',
+                    style: TextStyle(fontSize: 16, color: Colors.black),
                   ),
                 ),
               ],

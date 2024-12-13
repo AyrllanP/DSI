@@ -25,7 +25,7 @@ class MoodJourneyApp extends StatelessWidget {
         '/': (context) => const MoodJourneyHome(),
         '/login': (context) => LoginPage(),
         '/cadastro': (context) =>
-            const CadastroPage(), // Rota para a página de cadastro
+            CadastroPage(), // Rota para a página de cadastro
       },
     );
   }
