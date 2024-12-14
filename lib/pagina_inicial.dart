@@ -1,16 +1,16 @@
 import 'package:flutter/material.dart';
-import 'cadastro.dart'; // Importe a nova página
-import 'login.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'firebase_options.dart';
+import 'login.dart';
+import 'cadastro.dart';
+import 'notas_diarias.dart'; // Tela principal após login bem-sucedido
 
 void main() async {
-  WidgetsFlutterBinding.ensureInitialized();
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
-  // runApp(const MyApp());
   runApp(const MoodJourneyApp());
 }
 
@@ -24,8 +24,9 @@ class MoodJourneyApp extends StatelessWidget {
       routes: {
         '/': (context) => const MoodJourneyHome(),
         '/login': (context) => LoginPage(),
-        '/cadastro': (context) =>
-            CadastroPage(), // Rota para a página de cadastro
+        '/cadastro': (context) => CadastroPage(),
+        '/notas_diarias': (context) =>
+            NotasDiariasPage(), // Rota para Notas Diárias
       },
     );
   }
@@ -87,8 +88,7 @@ class MoodJourneyHome extends StatelessWidget {
                     minimumSize: const Size(120, 50),
                   ),
                   onPressed: () {
-                    Navigator.pushNamed(context,
-                        '/cadastro'); // Navega para a página de cadastro
+                    Navigator.pushNamed(context, '/cadastro');
                   },
                   child: const Text(
                     "Cadastro",
@@ -100,6 +100,30 @@ class MoodJourneyHome extends StatelessWidget {
           ),
         ],
       ),
+    );
+  }
+}
+
+class RoteadorTela extends StatelessWidget {
+  const RoteadorTela({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return StreamBuilder<User?>(
+      // Stream de autenticação
+      stream: FirebaseAuth.instance.authStateChanges(),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Center(child: CircularProgressIndicator());
+        }
+        if (snapshot.hasData) {
+          // Usuário logado, vai para a tela de Notas Diárias
+          return NotasDiariasPage();
+        } else {
+          // Usuário não logado, vai para a tela inicial com os botões de login e cadastro
+          return const MoodJourneyHome();
+        }
+      },
     );
   }
 }

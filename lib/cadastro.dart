@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'servicos/autenticacao.dart'; // Importe o serviço de autenticação
+import 'utilidades/snackbar.dart'; // Importe a função SnackBar
 
 class CadastroPage extends StatefulWidget {
   @override
@@ -10,8 +12,9 @@ class _CadastroPageState extends State<CadastroPage> {
   final TextEditingController _nomeController = TextEditingController();
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _senhaController = TextEditingController();
+  final AutenticacaoServico _authServico = AutenticacaoServico();
 
-  // Função de validação para o campo de nome
+  // Validações continuam iguais
   String? validarNome(String? value) {
     if (value == null || value.isEmpty) {
       return "O nome não pode ser vazio";
@@ -22,7 +25,6 @@ class _CadastroPageState extends State<CadastroPage> {
     return null;
   }
 
-  // Função de validação para o campo de email
   String? validarEmail(String? value) {
     if (value == null || value.isEmpty) {
       return "O email não pode ser vazio";
@@ -36,7 +38,6 @@ class _CadastroPageState extends State<CadastroPage> {
     return null;
   }
 
-  // Função de validação para o campo de senha
   String? validarSenha(String? value) {
     if (value == null || value.isEmpty) {
       return "A senha não pode ser vazia";
@@ -45,6 +46,29 @@ class _CadastroPageState extends State<CadastroPage> {
       return "A senha precisa ter no mínimo 4 caracteres";
     }
     return null;
+  }
+
+  // Função para processar o cadastro
+  void _processarCadastro() async {
+    if (_formKey.currentState?.validate() ?? false) {
+      String? erro = await _authServico.cadastrarUsuario(
+        nome: _nomeController.text.trim(),
+        email: _emailController.text.trim(),
+        senha: _senhaController.text.trim(),
+      );
+
+      if (erro != null) {
+        // Exibe erro
+        mostrarSnackBar(context: context, texto: erro);
+      } else {
+        // Sucesso
+        mostrarSnackBar(
+          context: context,
+          texto: "Cadastro realizado com sucesso!",
+          isErro: false,
+        );
+      }
+    }
   }
 
   @override
@@ -59,11 +83,9 @@ class _CadastroPageState extends State<CadastroPage> {
           child: Form(
             key: _formKey,
             child: Column(
-              mainAxisAlignment:
-                  MainAxisAlignment.center, // Centraliza os campos na tela
+              mainAxisAlignment: MainAxisAlignment.center,
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                // Campo Nome
                 TextFormField(
                   controller: _nomeController,
                   decoration: InputDecoration(
@@ -74,9 +96,7 @@ class _CadastroPageState extends State<CadastroPage> {
                   ),
                   validator: validarNome,
                 ),
-                SizedBox(height: 20), // Espaço entre os campos
-
-                // Campo Email
+                SizedBox(height: 20),
                 TextFormField(
                   controller: _emailController,
                   decoration: InputDecoration(
@@ -88,9 +108,7 @@ class _CadastroPageState extends State<CadastroPage> {
                   keyboardType: TextInputType.emailAddress,
                   validator: validarEmail,
                 ),
-                SizedBox(height: 20), // Espaço entre os campos
-
-                // Campo Senha
+                SizedBox(height: 20),
                 TextFormField(
                   controller: _senhaController,
                   decoration: InputDecoration(
@@ -102,24 +120,13 @@ class _CadastroPageState extends State<CadastroPage> {
                   obscureText: true,
                   validator: validarSenha,
                 ),
-                SizedBox(height: 30), // Espaço entre os campos e o botão
-
-                // Botão de Cadastro
+                SizedBox(height: 30),
                 ElevatedButton(
                   style: ElevatedButton.styleFrom(
-                    backgroundColor:
-                        Color.fromARGB(255, 186, 104, 200), // Cor do botão
+                    backgroundColor: Color.fromARGB(255, 186, 104, 200),
                     padding: EdgeInsets.symmetric(vertical: 15.0),
                   ),
-                  onPressed: () {
-                    if (_formKey.currentState?.validate() ?? false) {
-                      // Processar os dados (por exemplo, fazer cadastro)
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                            content: Text('Cadastro realizado com sucesso')),
-                      );
-                    }
-                  },
+                  onPressed: _processarCadastro,
                   child: const Text(
                     'Cadastrar',
                     style: TextStyle(fontSize: 16, color: Colors.black),

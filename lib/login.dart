@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'servicos/autenticacao.dart'; // Importa o serviço de autenticação
+import 'utilidades/snackbar.dart'; // Importa o arquivo de configuração da SnackBar
 
 class LoginPage extends StatefulWidget {
   @override
@@ -9,6 +11,8 @@ class _LoginPageState extends State<LoginPage> {
   final _formKey = GlobalKey<FormState>();
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _senhaController = TextEditingController();
+  final AutenticacaoServico _authServico =
+      AutenticacaoServico(); // Instância do serviço de autenticação
 
   // Função de validação para o campo de email
   String? validarEmail(String? value) {
@@ -35,76 +39,76 @@ class _LoginPageState extends State<LoginPage> {
     return null;
   }
 
+  // Função para realizar o login
+  void _fazerLogin() async {
+    String email = _emailController.text.trim();
+    String senha = _senhaController.text.trim();
+
+    if (email.isEmpty || senha.isEmpty) {
+      // Exibe a SnackBar com a cor vermelha (erro) se os campos estiverem vazios
+      mostrarSnackBar(
+        context: context,
+        texto: "Preencha os campos",
+        isErro: false,
+      );
+      return;
+    }
+
+    // Chama o método do serviço de autenticação
+    String? erro = await _authServico.logarUsuarios(email: email, senha: senha);
+
+    if (erro != null) {
+      // Exibe a SnackBar com a cor vermelha (erro) caso haja erro no login
+      mostrarSnackBar(
+          context: context,
+          texto:
+              "Senha ou Email incorreto.Ou Usuário não cadastrado"); // caso queira ver o erro deixa assim : 'texto: erro'
+    } else {
+      // Exibe a SnackBar com a cor verde (sucesso) caso o login seja bem-sucedido
+      mostrarSnackBar(
+          context: context,
+          texto: "Login realizado com sucesso!",
+          isErro: false // Sucesso
+          );
+      // Navega para a tela de notas diárias
+      Navigator.pushReplacementNamed(context, '/notas_diarias');
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Login'),
+        title: const Text("Login"),
       ),
-      body: Center(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16.0),
-          child: Form(
-            key: _formKey,
-            child: Column(
-              mainAxisAlignment:
-                  MainAxisAlignment.center, // Centraliza os campos na tela
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                // Campo Email
-                TextFormField(
-                  controller: _emailController,
-                  decoration: InputDecoration(
-                    labelText: 'Email',
-                    contentPadding:
-                        EdgeInsets.symmetric(vertical: 10.0, horizontal: 15.0),
-                    // Fundo invisível com linha na parte inferior
-                    border: UnderlineInputBorder(),
-                  ),
-                  keyboardType: TextInputType.emailAddress,
-                  validator: validarEmail,
-                ),
-                SizedBox(
-                    height: 20), // Aumentando o espaçamento entre os campos
-
-                // Campo Senha
-                TextFormField(
-                  controller: _senhaController,
-                  decoration: InputDecoration(
-                    labelText: 'Senha',
-                    contentPadding:
-                        EdgeInsets.symmetric(vertical: 10.0, horizontal: 15.0),
-                    // Fundo invisível com linha na parte inferior
-                    border: UnderlineInputBorder(),
-                  ),
-                  obscureText: true,
-                  validator: validarSenha,
-                ),
-                SizedBox(height: 30), // Espaço maior entre os campos e o botão
-
-                // Botão de Login
-                ElevatedButton(
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor:
-                        Color.fromARGB(255, 186, 104, 200), // Cor do botão
-                    padding: EdgeInsets.symmetric(vertical: 15.0),
-                  ),
-                  onPressed: () {
-                    if (_formKey.currentState?.validate() ?? false) {
-                      // Processar o login
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(content: Text('Login realizado com sucesso')),
-                      );
-                    }
-                  },
-                  child: Text(
-                    'Entrar',
-                    style: TextStyle(
-                        fontSize: 16, color: Colors.black), // Estilo do texto
-                  ),
-                ),
-              ],
-            ),
+      body: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Form(
+          key: _formKey,
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              // Campo Email
+              TextFormField(
+                controller: _emailController,
+                decoration: const InputDecoration(labelText: "Email"),
+                validator: validarEmail,
+              ),
+              // Campo Senha
+              TextFormField(
+                controller: _senhaController,
+                obscureText: true,
+                decoration: const InputDecoration(labelText: "Senha"),
+                validator: validarSenha,
+              ),
+              const SizedBox(height: 16.0),
+              // Botão de Login
+              ElevatedButton(
+                onPressed:
+                    _fazerLogin, // Chama a função de login ao pressionar o botão
+                child: const Text("Entrar"),
+              ),
+            ],
           ),
         ),
       ),
