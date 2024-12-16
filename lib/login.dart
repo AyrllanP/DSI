@@ -79,38 +79,81 @@ class _LoginPageState extends State<LoginPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text("Login"),
-      ),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Form(
-          key: _formKey,
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              // Campo Email
-              TextFormField(
-                controller: _emailController,
-                decoration: const InputDecoration(labelText: "Email"),
-                validator: validarEmail,
-              ),
-              // Campo Senha
-              TextFormField(
-                controller: _senhaController,
-                obscureText: true,
-                decoration: const InputDecoration(labelText: "Senha"),
-                validator: validarSenha,
-              ),
-              const SizedBox(height: 16.0),
-              // Botão de Login
-              ElevatedButton(
-                onPressed:
-                    _fazerLogin, // Chama a função de login ao pressionar o botão
-                child: const Text("Entrar"),
-              ),
-            ],
+        title: const Text(
+          "Login",
+          style: TextStyle(fontSize: 16, color: Colors.black)
           ),
-        ),
+      ),
+      body: 
+       Column(
+        children: [
+          Expanded(
+            child: Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Image.asset(
+                    'assets/logo.png',
+                    height: 75,
+                  ),
+                  const SizedBox(height: 20),
+                  const Text(
+                    'Mood\nJourney',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      fontFamily: 'Poppins',
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                      color: Color(0xFF221736),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          Spacer(),
+          Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Form(
+              key: _formKey,
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  // Campo Email
+                  TextFormField(
+                    controller: _emailController,
+                    decoration: const InputDecoration(labelText: "Email"),
+                    validator: validarEmail,
+                  ),
+                  // Campo Senha
+                  TextFormField(
+                    controller: _senhaController,
+                    obscureText: true,
+                    decoration: const InputDecoration(labelText: "Senha"),
+                    validator: validarSenha,
+                  ),
+                  const SizedBox(height: 16.0),
+                  // Botão de Login
+                  ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color.fromARGB(255, 186, 104, 200),
+                        minimumSize: const Size(120, 50),),
+                    onPressed:
+                        _fazerLogin, // Chama a função de login ao pressionar o botão
+                    child: const Text(
+                      "Entrar",
+                      style: TextStyle(
+                        fontSize: 16, 
+                        fontFamily: 'Roboto',
+                        color: Colors.black)
+                      ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          
+        ],
       ),
     );
   }

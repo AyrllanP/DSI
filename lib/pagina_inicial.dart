@@ -47,7 +47,7 @@ class MoodJourneyHome extends StatelessWidget {
                 children: [
                   Image.asset(
                     'assets/logo.png',
-                    height: 120,
+                    height: 75,
                   ),
                   const SizedBox(height: 20),
                   const Text(
@@ -55,7 +55,7 @@ class MoodJourneyHome extends StatelessWidget {
                     textAlign: TextAlign.center,
                     style: TextStyle(
                       fontFamily: 'Poppins',
-                      fontSize: 32,
+                      fontSize: 20,
                       fontWeight: FontWeight.bold,
                       color: Color(0xFF221736),
                     ),
@@ -79,7 +79,11 @@ class MoodJourneyHome extends StatelessWidget {
                   },
                   child: const Text(
                     'Entrar',
-                    style: TextStyle(fontSize: 16, color: Colors.black),
+                    style: TextStyle(
+                      fontSize: 16, 
+                      fontFamily: 'Roboto',
+                      color: Colors.black
+                      ),
                   ),
                 ),
                 OutlinedButton(
