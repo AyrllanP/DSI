@@ -109,7 +109,7 @@ class _CadastroPageState extends State<CadastroPage> {
               ),
             ),
           ),
-          Center(
+          Center( 
             child: Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16.0),
               child: Form(

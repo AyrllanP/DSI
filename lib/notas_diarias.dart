@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'servicos/autenticacao.dart'; // Importa o serviço de autenticação
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 class Nota {
   String titulo;
@@ -7,11 +8,28 @@ class Nota {
   String texto;
 
   Nota({required this.titulo, required this.data, required this.texto});
+ factory Nota.fromFirestore(DocumentSnapshot doc) {
+    final data = doc.data() as Map<String, dynamic>;
+    return Nota(
+      titulo: data['titulo'] ?? '', // Garantindo que os dados não sejam nulos
+      data: (data['data'] as Timestamp).toDate(), // Convertendo o Timestamp do Firestore para DateTime
+      texto: data['texto'] ?? '', // Garantindo que o texto não seja nulo
+    );
+  }
+   Map<String, dynamic> toMap() {
+    return {
+      'titulo': titulo,
+      'data': Timestamp.fromDate(data), // Convertendo DateTime para Timestamp
+      'texto': texto,
+    };
+  }
 }
 
 class NotasDiariasPage extends StatefulWidget {
   @override
   _NotasDiariasPageState createState() => _NotasDiariasPageState();
+
+
 }
 
 class _NotasDiariasPageState extends State<NotasDiariasPage> {
@@ -20,6 +38,22 @@ class _NotasDiariasPageState extends State<NotasDiariasPage> {
       AutenticacaoServico(); // Instância do serviço de autenticação
 
   List<Nota> _notas = []; // Lista para armazenar as notas
+
+  @override
+  void initState() {
+    super.initState();
+    _carregarNotas(); // Carrega as notas ao iniciar a página
+  }
+
+  // Função para carregar as notas do Firestore
+  Future<void> _carregarNotas() async {
+    
+  QuerySnapshot snapshot = await FirebaseFirestore.instance.collection('Notas').get();
+  
+  setState(() {
+    _notas = snapshot.docs.map((doc) => Nota.fromFirestore(doc)).toList();
+  });
+}
 
   void _onItemTapped(int index) {
     setState(() {
@@ -186,6 +220,7 @@ class _DialogAdicionarNotaState extends State<DialogAdicionarNota> {
       _dataSelecionada = widget.notaEditada!.data;
     }
   }
+  
 
   // Função para salvar a nota
   void _salvarNota() {
@@ -195,6 +230,8 @@ class _DialogAdicionarNotaState extends State<DialogAdicionarNota> {
         data: _dataSelecionada,
         texto: _textoController.text,
       );
+
+      FirebaseFirestore.instance.collection('Notas').add(novaNota.toMap());
 
       Navigator.of(context)
           .pop(novaNota); // Retorna a nova ou editada nota para o pai

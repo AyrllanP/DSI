@@ -1,7 +1,9 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
 class AutenticacaoServico {
   final FirebaseAuth _firebaseAuth = FirebaseAuth.instance;
+  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
   // Cadastro de usuário
   Future<String?> cadastrarUsuario({
@@ -44,6 +46,31 @@ class AutenticacaoServico {
   // Logout de usuário
   Future<void> deslogarUsuario() async {
     await _firebaseAuth.signOut();
+  }
+
+  // Adicionar uma nota no Firestore
+  Future<void> adicionarNota(String titulo, String texto) async {
+    // Obtém o usuário autenticado
+    User? user = _firebaseAuth.currentUser;
+
+    if (user != null) {
+      try {
+        // Armazenar a nota do usuário no Firestore
+        await _firestore
+            .collection('Notas') // Coleção de notas
+            .doc(user.uid) // Documento usando o ID do usuário
+            .collection('usuario_notas') // Subcoleção de notas do usuário
+            .add({
+          'titulo': titulo,
+          'texto': texto,
+          'data': DateTime.now(), // Adiciona a data de criação da nota
+        });
+      } catch (e) {
+        print("Erro ao adicionar nota: $e");
+      }
+    } else {
+      print("Usuário não autenticado.");
+    }
   }
 
   void setState(Null Function() param0) {}

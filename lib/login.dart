@@ -111,7 +111,7 @@ class _LoginPageState extends State<LoginPage> {
               ),
             ),
           ),
-          Spacer(),
+          
           Padding(
             padding: const EdgeInsets.all(16.0),
             child: Form(
