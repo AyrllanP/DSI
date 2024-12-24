@@ -1,16 +1,20 @@
 import 'package:flutter/material.dart';
 import 'servicos/autenticacao.dart'; // Importa o serviço de autenticação
-import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:cloud_firestore/cloud_firestore.dart'; // Para Firestore
+import 'package:firebase_auth/firebase_auth.dart'; // Para autenticação
+
 
 class Nota {
+  String id; 
   String titulo;
   DateTime data;
   String texto;
 
-  Nota({required this.titulo, required this.data, required this.texto});
+  Nota({required this.id, required this.titulo, required this.data, required this.texto});
  factory Nota.fromFirestore(DocumentSnapshot doc) {
     final data = doc.data() as Map<String, dynamic>;
     return Nota(
+      id: doc.id, // ID do documento
       titulo: data['titulo'] ?? '', // Garantindo que os dados não sejam nulos
       data: (data['data'] as Timestamp).toDate(), // Convertendo o Timestamp do Firestore para DateTime
       texto: data['texto'] ?? '', // Garantindo que o texto não seja nulo
@@ -47,13 +51,23 @@ class _NotasDiariasPageState extends State<NotasDiariasPage> {
 
   // Função para carregar as notas do Firestore
   Future<void> _carregarNotas() async {
-    
-  QuerySnapshot snapshot = await FirebaseFirestore.instance.collection('Notas').get();
-  
-  setState(() {
-    _notas = snapshot.docs.map((doc) => Nota.fromFirestore(doc)).toList();
-  });
+  User? user = FirebaseAuth.instance.currentUser;
+
+  if (user != null) {
+    QuerySnapshot snapshot = await FirebaseFirestore.instance
+        .collection('Notas')
+        .doc(user.uid)
+        .collection('usuario_notas')
+        .get();
+
+    setState(() {
+      _notas = snapshot.docs.map((doc) => Nota.fromFirestore(doc)).toList();
+    });
+  } else {
+    print("Usuário não autenticado.");
+  }
 }
+
 
   void _onItemTapped(int index) {
     setState(() {
@@ -95,14 +109,36 @@ class _NotasDiariasPageState extends State<NotasDiariasPage> {
   }
 
   // Função para excluir uma nota
-  void _deletarNota(Nota nota) {
-    setState(() {
-      _notas.remove(nota); // Remove a nota da lista
-    });
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text("Nota excluída com sucesso!")),
-    );
+ void _deletarNota(Nota nota) async {
+  User? user = FirebaseAuth.instance.currentUser;
+
+  if (user != null) {
+    try {
+      // Exclui a nota do Firestore
+      await FirebaseFirestore.instance
+          .collection('Notas')
+          .doc(user.uid)
+          .collection('usuario_notas')
+          .doc(nota.id)
+          .delete();
+
+      // Remove a nota localmente
+      setState(() {
+        _notas.remove(nota);
+      });
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Nota excluída com sucesso!")),
+      );
+    } catch (e) {
+      print("Erro ao excluir a nota: $e");
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Erro ao excluir a nota.")),
+      );
+    }
   }
+}
+
 
   @override
   Widget build(BuildContext context) {
@@ -223,20 +259,34 @@ class _DialogAdicionarNotaState extends State<DialogAdicionarNota> {
   
 
   // Função para salvar a nota
-  void _salvarNota() {
-    if (_formKey.currentState!.validate()) {
+  void _salvarNota() async {
+  if (_formKey.currentState!.validate()) {
+    final User? user = FirebaseAuth.instance.currentUser;
+
+    if (user != null) {
       final novaNota = Nota(
+        id: '', // Será gerado pelo Firestore
         titulo: _tituloController.text,
         data: _dataSelecionada,
         texto: _textoController.text,
       );
 
-      FirebaseFirestore.instance.collection('Notas').add(novaNota.toMap());
+      try {
+        DocumentReference docRef = await FirebaseFirestore.instance
+            .collection('Notas')
+            .doc(user.uid)
+            .collection('usuario_notas')
+            .add(novaNota.toMap());
 
-      Navigator.of(context)
-          .pop(novaNota); // Retorna a nova ou editada nota para o pai
+        novaNota.id = docRef.id; // Atualiza o ID da nota localmente
+
+        Navigator.of(context).pop(novaNota); // Retorna a nota salva
+      } catch (e) {
+        print("Erro ao salvar a nota: $e");
+      }
     }
   }
+}
 
   @override
   Widget build(BuildContext context) {
