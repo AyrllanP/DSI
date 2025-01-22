@@ -2,6 +2,9 @@ import 'package:flutter/material.dart';
 import 'servicos/autenticacao.dart'; // Importa o serviço de autenticação
 import 'package:cloud_firestore/cloud_firestore.dart'; // Para Firestore
 import 'package:firebase_auth/firebase_auth.dart'; // Para autenticação
+import 'package:projeto_dsi/diario_medo.dart';
+import 'package:projeto_dsi/mapas.dart';
+import 'package:projeto_dsi/habitos.dart';
 
 
 class Nota {
@@ -43,6 +46,7 @@ class _NotasDiariasPageState extends State<NotasDiariasPage> {
 
   List<Nota> _notas = []; // Lista para armazenar as notas
 
+  
   @override
   void initState() {
     super.initState();
@@ -69,11 +73,38 @@ class _NotasDiariasPageState extends State<NotasDiariasPage> {
 }
 
 
-  void _onItemTapped(int index) {
-    setState(() {
-      _selectedIndex = index;
-    });
+  void _onItemTapped(int index){
+    switch (index) {
+      case 0:
+      Navigator.pushReplacement(
+        context, 
+        MaterialPageRoute(builder:(context) => NotasDiariasPage()),
+      );
+        break;
+
+      case 1:
+      Navigator.pushReplacement(
+        context, 
+        MaterialPageRoute(builder:(context) => DiarioMedoPage()),
+      );
+        break;
+      
+      case 2:
+      Navigator.pushReplacement(
+        context, 
+        MaterialPageRoute(builder:(context) => HabitosPage()),
+      );
+        break;
+
+      case 3: 
+      Navigator.pushReplacement(
+        context, 
+        MaterialPageRoute(builder:(context) => MapasPage()),
+      );
+        break;
+    }
   }
+
 
   // Função para fazer o logout
   void _fazerLogout() async {
