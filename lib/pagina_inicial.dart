@@ -5,12 +5,16 @@ import 'firebase_options.dart';
 import 'login.dart';
 import 'cadastro.dart';
 import 'notas_diarias.dart'; // Tela principal após login bem-sucedido
+import 'package:intl/date_symbol_data_local.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
+
+  await initializeDateFormatting('pt_BR', null);
+  
   runApp(const MoodJourneyApp());
 }
 
