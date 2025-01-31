@@ -37,6 +37,16 @@ class _EntradaHabitosPageState extends State<EntradaHabitosPage> {
     super.dispose();
   }
 
+  int _getLimiteDiasPorFrequencia(String frequencia) {
+  switch (frequencia) {
+    case "1 vez na semana": return 1;
+    case "3 vezes na semana": return 3;
+    case "Todos os dias": return 7;
+    default: return 7;
+  }
+}
+
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -103,15 +113,22 @@ class _EntradaHabitosPageState extends State<EntradaHabitosPage> {
                           selected: _diasSelecionados.contains(dia),
                           onSelected: (selected) {
                             setState(() {
-                              if (selected) {
-                                _diasSelecionados.add(dia);
-                              } else {
-                                _diasSelecionados.remove(dia);
-                              }
+                               int maxDiasPermitidos = _getLimiteDiasPorFrequencia(_frequenciaSelecionada!);
+
+                                if (selected) {
+                                  if (_diasSelecionados.length < maxDiasPermitidos) {
+                                    _diasSelecionados.add(dia);
+                                  } else {
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      SnackBar(content: Text("Você só pode escolher $maxDiasPermitidos dia(s).")),
+                                    );
+                                  }
+                                } else {
+                                  _diasSelecionados.remove(dia);
+                                }
                             });
                           },
-                        ))
-                    .toList(),
+                        )).toList(),
               ),
               const SizedBox(height: 20),
             ],

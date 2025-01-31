@@ -12,13 +12,15 @@ class Habito {
   String descricao;
   String frequencia;
   List<String>? dias;
+  Map<String, bool> statusDiario;
 
   Habito({
     required this.nome,
     required this.descricao,
     required this.frequencia,
     this.dias,
-  });
+    Map<String, bool>? statusDiario,
+  }): statusDiario = statusDiario ?? {};
 }
 
 class HabitosPage extends StatefulWidget {
@@ -93,7 +95,7 @@ class _HabitosPageState extends State<HabitosPage> {
         );
       });
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Hábito editado com sucesso!")),
+        const SnackBar(content: Text("Hábito editado")),
       );
     }
   }
@@ -103,10 +105,44 @@ class _HabitosPageState extends State<HabitosPage> {
       _habitos.removeAt(index);
     });
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text("Hábito deletado com sucesso!")),
+      const SnackBar(content: Text("Hábito deletado")),
     );
   }
+  // Identificar frequência do hábito
+  List<Habito> _getHabitosDoDia(DateTime day){
+    String diaSemana = _obterDiaSemana(day);
 
+    return _habitos.where((habito) {
+      if (habito.frequencia == "Todos os dias"){
+        return true;
+      } else if (habito.dias != null && habito.dias!.contains(diaSemana)){
+        return true;
+      }
+      return false;
+    }).toList();
+  }
+
+  String _obterDiaSemana(DateTime date){
+    List<String> diasSemana = ["dom", "seg", "ter", "qua", "qui", "sex", "sáb"];
+    return diasSemana[date.weekday % 7];
+  }
+
+  // Filtrar hábitos
+
+  List<Habito> _getHabitosDoDiaSelecionado(){
+    String diaSemana = _obterDiaSemana(_selectedDay);
+
+    return _habitos.where((habito) {
+      if (habito.frequencia == "Todos os dias"){
+        return true;
+      } else if (habito.dias != null && habito.dias!.contains(diaSemana)){
+        return true;
+      }
+      return false;
+    }).toList();
+  }
+
+  // Barra de navegação
   void _onItemTapped(int index){
     switch (index) {
       case 0:
@@ -182,6 +218,7 @@ class _HabitosPageState extends State<HabitosPage> {
                 _focusedDay = focusedDay;
               });
             },
+            eventLoader: _getHabitosDoDia,
             calendarStyle: CalendarStyle(
               todayDecoration: BoxDecoration(
                 color: Colors.purple.shade200,
@@ -208,30 +245,75 @@ class _HabitosPageState extends State<HabitosPage> {
           // Crud - Ler
           Expanded(
             child: ListView.builder(
-              itemCount: _habitos.length,
+              itemCount: _getHabitosDoDiaSelecionado().length,
               itemBuilder: (context, index){
-                final habito = _habitos[index];
-                return Card(
-                  child: ListTile(
-                    title: Text(habito.nome),
-                    subtitle: Text(habito.descricao),
-                    onTap: () {
-                      _editarHabito(index); // Abre o diálogo para editar a nota
-                    },
-                    trailing: IconButton(
-                      icon: const Icon(Icons.delete),
-                      onPressed: () => _deletarHabito(index), // Deleta a nota
-                    ),
+                final habito = _getHabitosDoDiaSelecionado()[index];
+                final String dataAtual = _selectedDay.toIso8601String().split("T")[0];
+
+                return Dismissible(
+                  key: Key(habito.nome),
+                  direction: DismissDirection.endToStart,
+                  background: Container(
+                    color: Colors.red,
+                    alignment: Alignment.centerRight,
+                    padding: const EdgeInsets.symmetric(horizontal: 20),
+                    child: const Icon (Icons.delete, color: Colors.white,),
                   ),
-                );
-              },
+                  confirmDismiss: (direction) async {
+                    return await showDialog(
+                      context: context, 
+                      builder: (BuildContext context){
+                        return AlertDialog(
+                          title: const Text("Confirmar exclusão"),
+                          content: Text("Tem certeza que deseja excluir o hábito?"),
+                          actions: [
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                TextButton(
+                                onPressed: () => Navigator.of(context).pop(false),
+                                child: const Text("Não"),
+                                ),
+                                TextButton(
+                                  onPressed: () => Navigator.of(context).pop(true),
+                                  child: const Text("Sim"),
+                                ),
+                              ],
+                            ),
+                          ],
+                        );
+                      }
+                    );
+                  },
+                  onDismissed: (direction){
+                    _deletarHabito(index);
+                  },
+                  child: Card(
+                    child: ListTile(
+                      title: Text(habito.nome),
+                      subtitle: Text(habito.descricao),
+                      onTap: () {
+                        _editarHabito(index); 
+                      },
+                      trailing: Checkbox(
+                          value: habito.statusDiario.containsKey(dataAtual) ? habito.statusDiario[dataAtual]! : false,
+                          onChanged: (bool? value){
+                            setState(() {
+                              habito.statusDiario[dataAtual] = value ?? false;
+                            });
+                          },
+                        ), 
+                      ),
+                    ),
+                  );
+                },
             ),
           ),
         ],
       ),    
       floatingActionButton: FloatingActionButton(
         onPressed: () =>
-            _criarHabito(), // Abre o diálogo para adicionar uma nova nota
+            _criarHabito(), 
         backgroundColor: Colors.purple,
         child: const Icon(
           Icons.add,
@@ -240,7 +322,7 @@ class _HabitosPageState extends State<HabitosPage> {
       ),
       bottomNavigationBar: BottomNavigationBar(
         type: BottomNavigationBarType.fixed,
-        backgroundColor: const Color(0xFFE1BEE7), // Fundo lilás claro
+        backgroundColor: const Color(0xFFE1BEE7), 
         selectedItemColor: Colors.black,
         unselectedItemColor: Colors.black45,
         selectedFontSize: 14,
