@@ -4,10 +4,13 @@ import 'package:projeto_dsi/entrada_habitos.dart';
 import 'package:projeto_dsi/mapas.dart';
 import 'package:projeto_dsi/notas_diarias.dart';
 import 'servicos/autenticacao.dart'; // Importa o serviço de autenticação
+import 'package:cloud_firestore/cloud_firestore.dart'; // Para Firestore
+import 'package:firebase_auth/firebase_auth.dart'; // Para autenticação
 import 'package:table_calendar/table_calendar.dart'; // Para usar o calendário
 
 
 class Habito {
+  String id;
   String nome;
   String descricao;
   String frequencia;
@@ -15,12 +18,37 @@ class Habito {
   Map<String, bool> statusDiario;
 
   Habito({
+    required this.id,
     required this.nome,
     required this.descricao,
     required this.frequencia,
     this.dias,
     Map<String, bool>? statusDiario,
   }): statusDiario = statusDiario ?? {};
+
+  Map<String, dynamic> toMap() {
+    return {
+      'nome': nome,
+      'descricao': descricao,
+      'frequencia': frequencia,
+      'dias': dias,
+      'statusDiario': statusDiario,
+    };
+  }
+  
+  factory Habito.fromFirestore(DocumentSnapshot doc) {
+    final data = doc.data() as Map<String, dynamic>;
+    return Habito(
+      id: doc.id, // ID do documento
+      nome: data['nome'] ?? '', 
+      descricao: data['descricao'] ?? '',
+      frequencia: data['frequencia'] ?? '',
+      dias: data['dias'] != null ? List<String>.from(data['dias']) : null,
+      statusDiario: data['statusDiario'] != null
+        ? Map<String, bool>.from(data['statusDiario']) 
+        : {},
+    );
+  }
 }
 
 class HabitosPage extends StatefulWidget {
@@ -36,11 +64,40 @@ class _HabitosPageState extends State<HabitosPage> {
       AutenticacaoServico(); // Instância do serviço de autenticação
 
   // para os hábitos
-  final List<Habito> _habitos = [];
+  List<Habito> _habitos = [];
 
   // Tratar questões do calendário
   DateTime _selectedDay = DateTime.now();
   DateTime _focusedDay = DateTime.now();
+
+  // Usuário cadastrado no firebase
+  final User? user = FirebaseAuth.instance.currentUser;
+
+ // Buscar no banco de dados
+  @override
+  void initState(){
+    super.initState();
+    _carregarHabitos();
+  }
+  Future<void> _carregarHabitos() async{
+    try {
+      final snapshot = await FirebaseFirestore.instance
+        .collection('Habitos')
+        .doc(user!.uid)
+        .collection('usuario_habitos')
+        .get();
+
+      final List<Habito> habitosCarregados = snapshot.docs.map((doc){
+        return Habito.fromFirestore(doc);
+      }).toList();
+
+      setState(() {
+        _habitos = habitosCarregados;
+      });
+    }catch (e) {
+      print("Erro: $e");
+    }
+  }
 
   // Função para fazer o logout
   void _fazerLogout() async {
@@ -60,14 +117,25 @@ class _HabitosPageState extends State<HabitosPage> {
       ),
     );
     if (resultado != null){
-      setState(() {
-        _habitos.add(Habito(
+      Habito novoHabito = Habito(
+          id: '',
           nome: resultado['habito'],
           descricao: resultado['descricao'] ?? '',
           frequencia: resultado['frequencia'] ?? 'Todos os dias',
           dias: resultado['dias'],
-        ));
+        );
+      setState(() {
+        _habitos.add(novoHabito);
       });
+      // Salvar no Firestore
+      DocumentReference docRef = await FirebaseFirestore.instance
+        .collection('Habitos')
+        .doc(user!.uid)
+        .collection('usuario_habitos')
+        .add(novoHabito.toMap());
+
+      novoHabito.id = docRef.id;
+
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text("Hábito criado")),
       );
@@ -88,19 +156,36 @@ class _HabitosPageState extends State<HabitosPage> {
     if (resultado != null) {
       setState(() {
         _habitos[index] = Habito(
+          id: _habitos[index].id,
           nome: resultado['habito'],
           descricao: resultado['descricao'] ?? '',
           frequencia: resultado['frequencia'] ?? 'Todos os dias',
           dias: resultado['dias'],
+          statusDiario: _habitos[index].statusDiario,
         );
       });
+      // Atualizando no firebase
+      await FirebaseFirestore.instance
+        .collection('Habitos')
+        .doc(user!.uid)
+        .collection('usuario_habitos')
+        .doc(_habitos[index].id)
+        .update(_habitos[index].toMap());
+
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text("Hábito editado")),
       );
     }
   }
   // Crud - Deletar
-  void _deletarHabito(int index) {
+  void _deletarHabito(int index) async {
+    await FirebaseFirestore.instance
+      .collection('Habitos')
+      .doc(user!.uid)
+      .collection('usuario_habitos')
+      .doc(_habitos[index].id)
+      .delete();
+
     setState(() {
       _habitos.removeAt(index);
     });
@@ -142,6 +227,7 @@ class _HabitosPageState extends State<HabitosPage> {
     }).toList();
   }
 
+ 
   // Barra de navegação
   void _onItemTapped(int index){
     switch (index) {
@@ -244,73 +330,75 @@ class _HabitosPageState extends State<HabitosPage> {
           const SizedBox(height: 16),
           // Crud - Ler
           Expanded(
-            child: ListView.builder(
-              itemCount: _getHabitosDoDiaSelecionado().length,
-              itemBuilder: (context, index){
-                final habito = _getHabitosDoDiaSelecionado()[index];
-                final String dataAtual = _selectedDay.toIso8601String().split("T")[0];
+            child: _habitos.isEmpty 
+                ? Center(child: CircularProgressIndicator())
+                : ListView.builder(
+                    itemCount: _getHabitosDoDiaSelecionado().length,
+                    itemBuilder: (context, index) {
+                      final habito = _getHabitosDoDiaSelecionado()[index];
+                      final String dataAtual = _selectedDay.toIso8601String().split("T")[0];
 
-                return Dismissible(
-                  key: Key(habito.nome),
-                  direction: DismissDirection.endToStart,
-                  background: Container(
-                    color: Colors.red,
-                    alignment: Alignment.centerRight,
-                    padding: const EdgeInsets.symmetric(horizontal: 20),
-                    child: const Icon (Icons.delete, color: Colors.white,),
-                  ),
-                  confirmDismiss: (direction) async {
-                    return await showDialog(
-                      context: context, 
-                      builder: (BuildContext context){
-                        return AlertDialog(
-                          title: const Text("Confirmar exclusão"),
-                          content: Text("Tem certeza que deseja excluir o hábito?"),
-                          actions: [
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                TextButton(
-                                onPressed: () => Navigator.of(context).pop(false),
-                                child: const Text("Não"),
-                                ),
-                                TextButton(
-                                  onPressed: () => Navigator.of(context).pop(true),
-                                  child: const Text("Sim"),
-                                ),
-                              ],
+                      return Dismissible(
+                        key: Key(habito.nome),
+                        direction: DismissDirection.endToStart,
+                        background: Container(
+                          color: Colors.red,
+                          alignment: Alignment.centerRight,
+                          padding: const EdgeInsets.symmetric(horizontal: 20),
+                          child: const Icon(Icons.delete, color: Colors.white),
+                        ),
+                        confirmDismiss: (direction) async {
+                          return await showDialog(
+                            context: context,
+                            builder: (BuildContext context) {
+                              return AlertDialog(
+                                title: const Text("Confirmar exclusão"),
+                                content: Text("Tem certeza que deseja excluir o hábito?"),
+                                actions: [
+                                  Row(
+                                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                    children: [
+                                      TextButton(
+                                        onPressed: () => Navigator.of(context).pop(false),
+                                        child: const Text("Não"),
+                                      ),
+                                      TextButton(
+                                        onPressed: () => Navigator.of(context).pop(true),
+                                        child: const Text("Sim"),
+                                      ),
+                                    ],
+                                  ),
+                                ],
+                              );
+                            },
+                          );
+                        },
+                        onDismissed: (direction) {
+                          _deletarHabito(index);
+                        },
+                        child: Card(
+                          child: ListTile(
+                            title: Text(habito.nome),
+                            subtitle: Text(habito.descricao),
+                            onTap: () {
+                              _editarHabito(index);
+                            },
+                            trailing: Checkbox(
+                              value: habito.statusDiario.containsKey(dataAtual) ? habito.statusDiario[dataAtual]! : false,
+                              onChanged: (bool? value) {
+                                setState(() {
+                                  habito.statusDiario[dataAtual] = value ?? false;
+                                });
+                              },
                             ),
-                          ],
-                        );
-                      }
-                    );
-                  },
-                  onDismissed: (direction){
-                    _deletarHabito(index);
-                  },
-                  child: Card(
-                    child: ListTile(
-                      title: Text(habito.nome),
-                      subtitle: Text(habito.descricao),
-                      onTap: () {
-                        _editarHabito(index); 
-                      },
-                      trailing: Checkbox(
-                          value: habito.statusDiario.containsKey(dataAtual) ? habito.statusDiario[dataAtual]! : false,
-                          onChanged: (bool? value){
-                            setState(() {
-                              habito.statusDiario[dataAtual] = value ?? false;
-                            });
-                          },
-                        ), 
-                      ),
-                    ),
-                  );
-                },
-            ),
+                          ),
+                        ),
+                      );
+                    },
+                  ),
           ),
         ],
-      ),    
+      ),  
       floatingActionButton: FloatingActionButton(
         onPressed: () =>
             _criarHabito(), 
