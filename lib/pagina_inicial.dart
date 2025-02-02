@@ -14,7 +14,7 @@ void main() async {
   );
 
   await initializeDateFormatting('pt_BR', null);
-  
+
   runApp(const MoodJourneyApp());
 }
 
@@ -30,7 +30,7 @@ class MoodJourneyApp extends StatelessWidget {
         '/login': (context) => LoginPage(),
         '/cadastro': (context) => CadastroPage(),
         '/notas_diarias': (context) =>
-            NotasDiariasPage(), // Rota para Notas Diárias
+            NotasDiariaPage(), // Rota para Notas Diárias
       },
     );
   }
@@ -84,10 +84,9 @@ class MoodJourneyHome extends StatelessWidget {
                   child: const Text(
                     'Entrar',
                     style: TextStyle(
-                      fontSize: 16, 
-                      fontFamily: 'Roboto',
-                      color: Colors.black
-                      ),
+                        fontSize: 16,
+                        fontFamily: 'Roboto',
+                        color: Colors.black),
                   ),
                 ),
                 OutlinedButton(
@@ -126,7 +125,7 @@ class RoteadorTela extends StatelessWidget {
         }
         if (snapshot.hasData) {
           // Usuário logado, vai para a tela de Notas Diárias
-          return NotasDiariasPage();
+          return NotasDiariaPage();
         } else {
           // Usuário não logado, vai para a tela inicial com os botões de login e cadastro
           return const MoodJourneyHome();

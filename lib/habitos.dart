@@ -2,12 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:projeto_dsi/diario_medo.dart';
 import 'package:projeto_dsi/entrada_habitos.dart';
 import 'package:projeto_dsi/mapas.dart';
-import 'package:projeto_dsi/notas_diarias.dart';
+import 'notas_diarias.dart';
 import 'servicos/autenticacao.dart'; // Importa o serviço de autenticação
 import 'package:cloud_firestore/cloud_firestore.dart'; // Para Firestore
 import 'package:firebase_auth/firebase_auth.dart'; // Para autenticação
 import 'package:table_calendar/table_calendar.dart'; // Para usar o calendário
-
 
 class Habito {
   String id;
@@ -24,7 +23,7 @@ class Habito {
     required this.frequencia,
     this.dias,
     Map<String, bool>? statusDiario,
-  }): statusDiario = statusDiario ?? {};
+  }) : statusDiario = statusDiario ?? {};
 
   Map<String, dynamic> toMap() {
     return {
@@ -35,18 +34,18 @@ class Habito {
       'statusDiario': statusDiario,
     };
   }
-  
+
   factory Habito.fromFirestore(DocumentSnapshot doc) {
     final data = doc.data() as Map<String, dynamic>;
     return Habito(
       id: doc.id, // ID do documento
-      nome: data['nome'] ?? '', 
+      nome: data['nome'] ?? '',
       descricao: data['descricao'] ?? '',
       frequencia: data['frequencia'] ?? '',
       dias: data['dias'] != null ? List<String>.from(data['dias']) : null,
       statusDiario: data['statusDiario'] != null
-        ? Map<String, bool>.from(data['statusDiario']) 
-        : {},
+          ? Map<String, bool>.from(data['statusDiario'])
+          : {},
     );
   }
 }
@@ -54,8 +53,6 @@ class Habito {
 class HabitosPage extends StatefulWidget {
   @override
   _HabitosPageState createState() => _HabitosPageState();
-
-
 }
 
 class _HabitosPageState extends State<HabitosPage> {
@@ -73,28 +70,29 @@ class _HabitosPageState extends State<HabitosPage> {
   // Usuário cadastrado no firebase
   final User? user = FirebaseAuth.instance.currentUser;
 
- // Buscar no banco de dados
+  // Buscar no banco de dados
   @override
-  void initState(){
+  void initState() {
     super.initState();
     _carregarHabitos();
   }
-  Future<void> _carregarHabitos() async{
+
+  Future<void> _carregarHabitos() async {
     try {
       final snapshot = await FirebaseFirestore.instance
-        .collection('Habitos')
-        .doc(user!.uid)
-        .collection('usuario_habitos')
-        .get();
+          .collection('Habitos')
+          .doc(user!.uid)
+          .collection('usuario_habitos')
+          .get();
 
-      final List<Habito> habitosCarregados = snapshot.docs.map((doc){
+      final List<Habito> habitosCarregados = snapshot.docs.map((doc) {
         return Habito.fromFirestore(doc);
       }).toList();
 
       setState(() {
         _habitos = habitosCarregados;
       });
-    }catch (e) {
+    } catch (e) {
       print("Erro: $e");
     }
   }
@@ -108,31 +106,30 @@ class _HabitosPageState extends State<HabitosPage> {
     // Após o logout, redireciona para a tela de login
     Navigator.pushReplacementNamed(context, '/login');
   }
+
   // Crud - Criar
   void _criarHabito() async {
     final resultado = await Navigator.push(
-      context, 
-      MaterialPageRoute(
-        builder: (context) => const EntradaHabitosPage()
-      ),
+      context,
+      MaterialPageRoute(builder: (context) => const EntradaHabitosPage()),
     );
-    if (resultado != null){
+    if (resultado != null) {
       Habito novoHabito = Habito(
-          id: '',
-          nome: resultado['habito'],
-          descricao: resultado['descricao'] ?? '',
-          frequencia: resultado['frequencia'] ?? 'Todos os dias',
-          dias: resultado['dias'],
-        );
+        id: '',
+        nome: resultado['habito'],
+        descricao: resultado['descricao'] ?? '',
+        frequencia: resultado['frequencia'] ?? 'Todos os dias',
+        dias: resultado['dias'],
+      );
       setState(() {
         _habitos.add(novoHabito);
       });
       // Salvar no Firestore
       DocumentReference docRef = await FirebaseFirestore.instance
-        .collection('Habitos')
-        .doc(user!.uid)
-        .collection('usuario_habitos')
-        .add(novoHabito.toMap());
+          .collection('Habitos')
+          .doc(user!.uid)
+          .collection('usuario_habitos')
+          .add(novoHabito.toMap());
 
       novoHabito.id = docRef.id;
 
@@ -141,8 +138,9 @@ class _HabitosPageState extends State<HabitosPage> {
       );
     }
   }
+
   // Crud - Editar
-  void _editarHabito(int index) async{
+  void _editarHabito(int index) async {
     final resultado = await Navigator.push(
       context,
       MaterialPageRoute(
@@ -166,25 +164,26 @@ class _HabitosPageState extends State<HabitosPage> {
       });
       // Atualizando no firebase
       await FirebaseFirestore.instance
-        .collection('Habitos')
-        .doc(user!.uid)
-        .collection('usuario_habitos')
-        .doc(_habitos[index].id)
-        .update(_habitos[index].toMap());
+          .collection('Habitos')
+          .doc(user!.uid)
+          .collection('usuario_habitos')
+          .doc(_habitos[index].id)
+          .update(_habitos[index].toMap());
 
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text("Hábito editado")),
       );
     }
   }
+
   // Crud - Deletar
   void _deletarHabito(int index) async {
     await FirebaseFirestore.instance
-      .collection('Habitos')
-      .doc(user!.uid)
-      .collection('usuario_habitos')
-      .doc(_habitos[index].id)
-      .delete();
+        .collection('Habitos')
+        .doc(user!.uid)
+        .collection('usuario_habitos')
+        .doc(_habitos[index].id)
+        .delete();
 
     setState(() {
       _habitos.removeAt(index);
@@ -193,75 +192,74 @@ class _HabitosPageState extends State<HabitosPage> {
       const SnackBar(content: Text("Hábito deletado")),
     );
   }
+
   // Identificar frequência do hábito
-  List<Habito> _getHabitosDoDia(DateTime day){
+  List<Habito> _getHabitosDoDia(DateTime day) {
     String diaSemana = _obterDiaSemana(day);
 
     return _habitos.where((habito) {
-      if (habito.frequencia == "Todos os dias"){
+      if (habito.frequencia == "Todos os dias") {
         return true;
-      } else if (habito.dias != null && habito.dias!.contains(diaSemana)){
+      } else if (habito.dias != null && habito.dias!.contains(diaSemana)) {
         return true;
       }
       return false;
     }).toList();
   }
 
-  String _obterDiaSemana(DateTime date){
+  String _obterDiaSemana(DateTime date) {
     List<String> diasSemana = ["dom", "seg", "ter", "qua", "qui", "sex", "sáb"];
     return diasSemana[date.weekday % 7];
   }
 
   // Filtrar hábitos
 
-  List<Habito> _getHabitosDoDiaSelecionado(){
+  List<Habito> _getHabitosDoDiaSelecionado() {
     String diaSemana = _obterDiaSemana(_selectedDay);
 
     return _habitos.where((habito) {
-      if (habito.frequencia == "Todos os dias"){
+      if (habito.frequencia == "Todos os dias") {
         return true;
-      } else if (habito.dias != null && habito.dias!.contains(diaSemana)){
+      } else if (habito.dias != null && habito.dias!.contains(diaSemana)) {
         return true;
       }
       return false;
     }).toList();
   }
 
- 
   // Barra de navegação
-  void _onItemTapped(int index){
+  void _onItemTapped(int index) {
     switch (index) {
       case 0:
-      Navigator.pushReplacement(
-        context, 
-        MaterialPageRoute(builder:(context) => NotasDiariasPage()),
-      );
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => NotasDiariaPage()),
+        );
         break;
 
       case 1:
-      Navigator.pushReplacement(
-        context, 
-        MaterialPageRoute(builder:(context) => DiarioMedoPage()),
-      );
-        break;
-      
-      case 2:
-      Navigator.pushReplacement(
-        context, 
-        MaterialPageRoute(builder:(context) => HabitosPage()),
-      );
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => DiarioMedoPage()),
+        );
         break;
 
-      case 3: 
-      Navigator.pushReplacement(
-        context, 
-        MaterialPageRoute(builder:(context) => MapasPage()),
-      );
+      case 2:
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => HabitosPage()),
+        );
+        break;
+
+      case 3:
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => MapasPage()),
+        );
         break;
     }
   }
-  
-    
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -291,15 +289,15 @@ class _HabitosPageState extends State<HabitosPage> {
         ],
       ),
       body: Column(
-        children:[
+        children: [
           TableCalendar(
             locale: 'pt_BR',
             firstDay: DateTime(2020, 1, 1),
             lastDay: DateTime(2100, 12, 31),
             focusedDay: _focusedDay,
             selectedDayPredicate: (day) => isSameDay(_selectedDay, day),
-            onDaySelected: (selectedDay, focusedDay){
-              setState((){
+            onDaySelected: (selectedDay, focusedDay) {
+              setState(() {
                 _selectedDay = selectedDay;
                 _focusedDay = focusedDay;
               });
@@ -310,10 +308,8 @@ class _HabitosPageState extends State<HabitosPage> {
                 color: Colors.purple.shade200,
                 shape: BoxShape.circle,
               ),
-              selectedDecoration: BoxDecoration(
-                color:Colors.purple,
-                shape:BoxShape.circle
-              ),
+              selectedDecoration:
+                  BoxDecoration(color: Colors.purple, shape: BoxShape.circle),
               selectedTextStyle: const TextStyle(
                 color: Colors.white,
               ),
@@ -321,22 +317,21 @@ class _HabitosPageState extends State<HabitosPage> {
             headerStyle: HeaderStyle(
               formatButtonVisible: false,
               titleCentered: true,
-              titleTextStyle: const TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold
-              ),
+              titleTextStyle:
+                  const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
             ),
           ),
           const SizedBox(height: 16),
           // Crud - Ler
           Expanded(
-            child: _habitos.isEmpty 
+            child: _habitos.isEmpty
                 ? Center(child: CircularProgressIndicator())
                 : ListView.builder(
                     itemCount: _getHabitosDoDiaSelecionado().length,
                     itemBuilder: (context, index) {
                       final habito = _getHabitosDoDiaSelecionado()[index];
-                      final String dataAtual = _selectedDay.toIso8601String().split("T")[0];
+                      final String dataAtual =
+                          _selectedDay.toIso8601String().split("T")[0];
 
                       return Dismissible(
                         key: Key(habito.nome),
@@ -353,17 +348,21 @@ class _HabitosPageState extends State<HabitosPage> {
                             builder: (BuildContext context) {
                               return AlertDialog(
                                 title: const Text("Confirmar exclusão"),
-                                content: Text("Tem certeza que deseja excluir o hábito?"),
+                                content: Text(
+                                    "Tem certeza que deseja excluir o hábito?"),
                                 actions: [
                                   Row(
-                                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                    mainAxisAlignment:
+                                        MainAxisAlignment.spaceBetween,
                                     children: [
                                       TextButton(
-                                        onPressed: () => Navigator.of(context).pop(false),
+                                        onPressed: () =>
+                                            Navigator.of(context).pop(false),
                                         child: const Text("Não"),
                                       ),
                                       TextButton(
-                                        onPressed: () => Navigator.of(context).pop(true),
+                                        onPressed: () =>
+                                            Navigator.of(context).pop(true),
                                         child: const Text("Sim"),
                                       ),
                                     ],
@@ -384,10 +383,13 @@ class _HabitosPageState extends State<HabitosPage> {
                               _editarHabito(index);
                             },
                             trailing: Checkbox(
-                              value: habito.statusDiario.containsKey(dataAtual) ? habito.statusDiario[dataAtual]! : false,
+                              value: habito.statusDiario.containsKey(dataAtual)
+                                  ? habito.statusDiario[dataAtual]!
+                                  : false,
                               onChanged: (bool? value) {
                                 setState(() {
-                                  habito.statusDiario[dataAtual] = value ?? false;
+                                  habito.statusDiario[dataAtual] =
+                                      value ?? false;
                                 });
                               },
                             ),
@@ -398,10 +400,9 @@ class _HabitosPageState extends State<HabitosPage> {
                   ),
           ),
         ],
-      ),  
+      ),
       floatingActionButton: FloatingActionButton(
-        onPressed: () =>
-            _criarHabito(), 
+        onPressed: () => _criarHabito(),
         backgroundColor: Colors.purple,
         child: const Icon(
           Icons.add,
@@ -410,7 +411,7 @@ class _HabitosPageState extends State<HabitosPage> {
       ),
       bottomNavigationBar: BottomNavigationBar(
         type: BottomNavigationBarType.fixed,
-        backgroundColor: const Color(0xFFE1BEE7), 
+        backgroundColor: const Color(0xFFE1BEE7),
         selectedItemColor: Colors.black,
         unselectedItemColor: Colors.black45,
         selectedFontSize: 14,

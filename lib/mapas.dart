@@ -1,18 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:projeto_dsi/diario_medo.dart';
 import 'package:projeto_dsi/habitos.dart';
-import 'package:projeto_dsi/notas_diarias.dart';
+import 'notas_diarias.dart';
 import 'servicos/autenticacao.dart'; // Importa o serviço de autenticação
 
-class Mapas {
-  
-}
+class Mapas {}
 
 class MapasPage extends StatefulWidget {
   @override
   _MapasPageState createState() => _MapasPageState();
-
-
 }
 
 class _MapasPageState extends State<MapasPage> {
@@ -30,39 +26,38 @@ class _MapasPageState extends State<MapasPage> {
     Navigator.pushReplacementNamed(context, '/login');
   }
 
-  void _onItemTapped(int index){
+  void _onItemTapped(int index) {
     switch (index) {
       case 0:
-      Navigator.pushReplacement(
-        context, 
-        MaterialPageRoute(builder:(context) => NotasDiariasPage()),
-      );
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => NotasDiariaPage()),
+        );
         break;
 
       case 1:
-      Navigator.pushReplacement(
-        context, 
-        MaterialPageRoute(builder:(context) => DiarioMedoPage()),
-      );
-        break;
-      
-      case 2:
-      Navigator.pushReplacement(
-        context, 
-        MaterialPageRoute(builder:(context) => HabitosPage()),
-      );
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => DiarioMedoPage()),
+        );
         break;
 
-      case 3: 
-      Navigator.pushReplacement(
-        context, 
-        MaterialPageRoute(builder:(context) => MapasPage()),
-      );
+      case 2:
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => HabitosPage()),
+        );
+        break;
+
+      case 3:
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => MapasPage()),
+        );
         break;
     }
   }
-  
-    
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -91,9 +86,7 @@ class _MapasPageState extends State<MapasPage> {
           ),
         ],
       ),
-      body: const Center(
-        child: Text('Mapas')
-        ),    
+      body: const Center(child: Text('Mapas')),
       bottomNavigationBar: BottomNavigationBar(
         type: BottomNavigationBarType.fixed,
         backgroundColor: const Color(0xFFE1BEE7), // Fundo lilás claro
