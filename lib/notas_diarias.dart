@@ -78,6 +78,16 @@ class _NotasDiariaPageState extends State<NotasDiariaPage> {
     );
   }
 
+  Future<void> _deletarNota(String idNota) async {
+    await FirebaseFirestore.instance.collection('notas').doc(idNota).delete();
+  }
+
+  void _logout() async {
+    await FirebaseAuth.instance.signOut();
+    Navigator.pushReplacementNamed(
+        context, '/login'); // Navega de volta para a página de login
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -109,18 +119,12 @@ class _NotasDiariaPageState extends State<NotasDiariaPage> {
         ),
         actions: [
           IconButton(
-            icon: Icon(Icons.calendar_today, color: Colors.black),
-            onPressed: _pickDate,
-          ),
-          IconButton(
             icon: Icon(Icons.close, color: Colors.black),
             onPressed: _removerFiltros,
           ),
           IconButton(
-            icon: Icon(Icons.search, color: Colors.black),
-            onPressed: () {
-              showSearch(context: context, delegate: _SearchDelegate());
-            },
+            icon: Icon(Icons.logout, color: Colors.black), // Ícone de logout
+            onPressed: _logout, // Função de logout
           ),
         ],
       ),
@@ -128,26 +132,6 @@ class _NotasDiariaPageState extends State<NotasDiariaPage> {
         stream: FirebaseFirestore.instance
             .collection('notas')
             .where('emailUsuario', isEqualTo: userEmail)
-            .where(
-              'dataCriacao',
-              isGreaterThanOrEqualTo: _isDateSelected
-                  ? Timestamp.fromDate(DateTime(
-                      _selectedDate.year,
-                      _selectedDate.month,
-                      _selectedDate.day,
-                    ))
-                  : null,
-            )
-            .where(
-              'dataCriacao',
-              isLessThan: _isDateSelected
-                  ? Timestamp.fromDate(DateTime(
-                      _selectedDate.year,
-                      _selectedDate.month,
-                      _selectedDate.day + 1,
-                    ))
-                  : null,
-            )
             .snapshots(),
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
@@ -169,29 +153,71 @@ class _NotasDiariaPageState extends State<NotasDiariaPage> {
             itemCount: notas.length,
             itemBuilder: (context, index) {
               final nota = notas[index];
-              return Card(
-                margin: const EdgeInsets.symmetric(vertical: 8.0),
-                child: ListTile(
-                  title: Text(nota['titulo'] ?? 'Sem título'),
-                  subtitle: Text(nota['nota'] ?? 'Sem conteúdo'),
-                  trailing: Text(
-                    nota['dataCriacao'] != null
-                        ? DateFormat('dd/MM/yyyy')
-                            .format((nota['dataCriacao'] as Timestamp).toDate())
-                        : 'Sem data',
-                  ),
-                  onTap: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => EditarNotaPage(
-                          idNota: nota.id,
-                          titulo: nota['titulo'],
-                          conteudo: nota['nota'],
+              return Dismissible(
+                key: Key(nota.id),
+                direction: DismissDirection.endToStart,
+                background: Container(
+                  color: Colors.red,
+                  alignment: Alignment.centerRight,
+                  padding: const EdgeInsets.symmetric(horizontal: 20),
+                  child: const Icon(Icons.delete, color: Colors.white),
+                ),
+                confirmDismiss: (direction) async {
+                  return await showDialog(
+                    context: context,
+                    builder: (BuildContext context) {
+                      return AlertDialog(
+                        title: const Text("Confirmar exclusão"),
+                        content:
+                            Text("Tem certeza que deseja excluir esta nota?"),
+                        actions: [
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              TextButton(
+                                onPressed: () =>
+                                    Navigator.of(context).pop(false),
+                                child: const Text("Não"),
+                              ),
+                              TextButton(
+                                onPressed: () =>
+                                    Navigator.of(context).pop(true),
+                                child: const Text("Sim"),
+                              ),
+                            ],
+                          ),
+                        ],
+                      );
+                    },
+                  );
+                },
+                onDismissed: (direction) {
+                  _deletarNota(nota.id);
+                },
+                child: Card(
+                  margin: const EdgeInsets.symmetric(vertical: 8.0),
+                  child: ListTile(
+                    title: Text(nota['titulo'] ?? 'Sem título'),
+                    subtitle: Text(nota['nota'] ?? 'Sem conteúdo'),
+                    trailing: Text(
+                      nota['dataCriacao'] != null
+                          ? DateFormat('dd/MM/yyyy').format(
+                              (nota['dataCriacao'] as Timestamp).toDate())
+                          : 'Sem data',
+                    ),
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => EditarNotaPage(
+                            idNota: nota.id,
+                            titulo: nota['titulo'],
+                            conteudo: nota['nota'],
+                          ),
                         ),
-                      ),
-                    );
-                  },
+                      );
+                    },
+                  ),
                 ),
               );
             },
@@ -200,8 +226,11 @@ class _NotasDiariaPageState extends State<NotasDiariaPage> {
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: () => _adicionarNota(context),
-        backgroundColor: Colors.white,
-        child: Icon(Icons.add, color: Colors.black),
+        backgroundColor: Colors.purple,
+        child: const Icon(
+          Icons.add,
+          color: Colors.white,
+        ),
       ),
       bottomNavigationBar: BottomNavigationBar(
         type: BottomNavigationBarType.fixed,
@@ -211,96 +240,14 @@ class _NotasDiariaPageState extends State<NotasDiariaPage> {
         onTap: _onItemTapped,
         items: [
           BottomNavigationBarItem(
-            icon: Icon(Icons.note),
-            label: 'Notas diárias',
-          ),
+              icon: Icon(Icons.note), label: 'Notas diárias'),
           BottomNavigationBarItem(
-            icon: Icon(Icons.person_outline),
-            label: 'Diário do medo',
-          ),
+              icon: Icon(Icons.person_outline), label: 'Diário do medo'),
           BottomNavigationBarItem(
-            icon: Icon(Icons.calendar_today),
-            label: 'Hábitos',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.map),
-            label: 'Maps',
-          ),
+              icon: Icon(Icons.calendar_today), label: 'Hábitos'),
+          BottomNavigationBarItem(icon: Icon(Icons.map), label: 'Maps'),
         ],
       ),
-    );
-  }
-}
-
-class _SearchDelegate extends SearchDelegate {
-  @override
-  String get searchFieldLabel => 'Buscar por título...';
-
-  @override
-  List<Widget> buildActions(BuildContext context) {
-    return [
-      IconButton(
-        icon: Icon(Icons.clear),
-        onPressed: () {
-          query = '';
-        },
-      ),
-    ];
-  }
-
-  @override
-  Widget buildLeading(BuildContext context) {
-    return IconButton(
-      icon: Icon(Icons.arrow_back),
-      onPressed: () {
-        close(context, null);
-      },
-    );
-  }
-
-  @override
-  Widget buildResults(BuildContext context) {
-    return _buildSearchResults();
-  }
-
-  @override
-  Widget buildSuggestions(BuildContext context) {
-    return _buildSearchResults();
-  }
-
-  Widget _buildSearchResults() {
-    if (query.isEmpty) {
-      return Center(child: Text('Digite um título para buscar.'));
-    }
-
-    final String? userEmail = FirebaseAuth.instance.currentUser?.email;
-
-    return FutureBuilder<QuerySnapshot>(
-      future: FirebaseFirestore.instance
-          .collection('notas')
-          .where('emailUsuario', isEqualTo: userEmail)
-          .where('titulo', isGreaterThanOrEqualTo: query)
-          .where('titulo', isLessThanOrEqualTo: query + '\uf8ff')
-          .get(),
-      builder: (context, snapshot) {
-        if (snapshot.connectionState == ConnectionState.waiting) {
-          return Center(child: CircularProgressIndicator());
-        }
-        if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
-          return Center(child: Text('Nenhuma nota encontrada!'));
-        }
-
-        final notas = snapshot.data!.docs;
-
-        return ListView.builder(
-          padding: const EdgeInsets.all(8.0),
-          itemCount: notas.length,
-          itemBuilder: (context, index) {
-            final nota = notas[index];
-            return ListTile(title: Text(nota['titulo'] ?? 'Sem título'));
-          },
-        );
-      },
     );
   }
 }
