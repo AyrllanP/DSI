@@ -50,10 +50,10 @@ class _EntradaHabitosPageState extends State<EntradaHabitosPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: Text(widget.habito == null ? "Criar Hábito" : "Editar Hábito"),
-        backgroundColor: Colors.white,
-      ),
+      // appBar: AppBar(
+      //   title: Text(widget.habito == null ? "Criar Hábito" : "Editar Hábito"),
+      //   backgroundColor: Colors.white,
+      // ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(
@@ -132,37 +132,45 @@ class _EntradaHabitosPageState extends State<EntradaHabitosPage> {
               ),
               const SizedBox(height: 20),
             ],
-
-            // Botão Salvar
-            ElevatedButton(
-              onPressed: () {
-                final novoHabito = _habitoController.text.trim();
-                final descricao = _descricaoController.text.trim();
-
-                if (novoHabito.isEmpty) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text("Por favor, insira um nome para o hábito."),
-                    ),
-                  );
-                  return;
-                }
-
-                Navigator.pop(context, {
-                  'habito': novoHabito,
-                  'descricao': descricao,
-                  'frequencia': _frequenciaSelecionada,
-                  'dias': _frequenciaSelecionada != "Todos os dias" ? _diasSelecionados : null,
-                });
-              },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.purple,
-                foregroundColor: Colors.white,
-              ),
-              child: const Text("Salvar"),
-            ),
           ],
         ),
+      ),
+      bottomNavigationBar: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              FloatingActionButton(
+                onPressed: () => Navigator.pop(context),
+                backgroundColor: Colors.black,
+                child: Icon(Icons.close, color: Colors.white),
+              ),
+              FloatingActionButton(
+                onPressed: () {
+                  final novoHabito = _habitoController.text.trim();
+                  final descricao = _descricaoController.text.trim();
+
+                  if (novoHabito.isEmpty) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text("Por favor, insira um nome para o hábito."),
+                      ),
+                    );
+                    return;
+                  }
+
+                  Navigator.pop(context, {
+                    'habito': novoHabito,
+                    'descricao': descricao,
+                    'frequencia': _frequenciaSelecionada,
+                    'dias': _frequenciaSelecionada != "Todos os dias" ? _diasSelecionados : null,
+                  });
+                }, 
+                backgroundColor: Colors.black,
+                child: Icon(Icons.check, color: Colors.white),
+              ),
+            ],
+          ),
       ),
     );
   }
