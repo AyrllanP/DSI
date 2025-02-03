@@ -1,144 +1,92 @@
 import 'package:flutter/material.dart';
-import 'servicos/autenticacao.dart'; // Importa o serviço de autenticação
-import 'package:cloud_firestore/cloud_firestore.dart'; // Para Firestore
-import 'package:firebase_auth/firebase_auth.dart'; // Para autenticação
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:intl/intl.dart';
+import 'notas_diarias_page.dart';
+import 'package:projeto_dsi/mapas.dart';
+import 'package:projeto_dsi/diario_medo.dart';
+import 'package:projeto_dsi/habitos.dart';
 
-
-class Nota {
-  String id; 
-  String titulo;
-  DateTime data;
-  String texto;
-
-  Nota({required this.id, required this.titulo, required this.data, required this.texto});
- factory Nota.fromFirestore(DocumentSnapshot doc) {
-    final data = doc.data() as Map<String, dynamic>;
-    return Nota(
-      id: doc.id, // ID do documento
-      titulo: data['titulo'] ?? '', // Garantindo que os dados não sejam nulos
-      data: (data['data'] as Timestamp).toDate(), // Convertendo o Timestamp do Firestore para DateTime
-      texto: data['texto'] ?? '', // Garantindo que o texto não seja nulo
-    );
-  }
-   Map<String, dynamic> toMap() {
-    return {
-      'titulo': titulo,
-      'data': Timestamp.fromDate(data), // Convertendo DateTime para Timestamp
-      'texto': texto,
-    };
-  }
-}
-
-class NotasDiariasPage extends StatefulWidget {
+class NotasDiariaPage extends StatefulWidget {
   @override
-  _NotasDiariasPageState createState() => _NotasDiariasPageState();
-
-
+  _NotasDiariaPageState createState() => _NotasDiariaPageState();
 }
 
-class _NotasDiariasPageState extends State<NotasDiariasPage> {
-  int _selectedIndex = 0; // Índice da aba selecionada
-  final AutenticacaoServico _authServico =
-      AutenticacaoServico(); // Instância do serviço de autenticação
-
-  List<Nota> _notas = []; // Lista para armazenar as notas
+class _NotasDiariaPageState extends State<NotasDiariaPage> {
+  DateTime _selectedDate = DateTime.now();
+  late String _formattedDate;
+  bool _isDateSelected = false;
+  final String? userEmail = FirebaseAuth.instance.currentUser?.email;
 
   @override
   void initState() {
     super.initState();
-    _carregarNotas(); // Carrega as notas ao iniciar a página
+    _formattedDate = DateFormat('MMM yyyy').format(_selectedDate);
   }
 
-  // Função para carregar as notas do Firestore
-  Future<void> _carregarNotas() async {
-  User? user = FirebaseAuth.instance.currentUser;
+  void _adicionarNota(BuildContext context) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => EditarNotaPage(),
+      ),
+    );
+  }
 
-  if (user != null) {
-    QuerySnapshot snapshot = await FirebaseFirestore.instance
-        .collection('Notas')
-        .doc(user.uid)
-        .collection('usuario_notas')
-        .get();
+  Future<void> _pickDate() async {
+    final DateTime? picked = await showDatePicker(
+      context: context,
+      initialDate: _selectedDate,
+      firstDate: DateTime(2000),
+      lastDate: DateTime(2101),
+    );
 
+    if (picked != null && picked != _selectedDate) {
+      setState(() {
+        _selectedDate = picked;
+        _formattedDate = DateFormat('MMM yyyy').format(_selectedDate);
+        _isDateSelected = true;
+      });
+    }
+  }
+
+  void _removerFiltros() {
     setState(() {
-      _notas = snapshot.docs.map((doc) => Nota.fromFirestore(doc)).toList();
+      _isDateSelected = false;
+      _formattedDate = DateFormat('MMM yyyy').format(DateTime.now());
     });
-  } else {
-    print("Usuário não autenticado.");
   }
-}
-
 
   void _onItemTapped(int index) {
-    setState(() {
-      _selectedIndex = index;
-    });
-  }
-
-  // Função para fazer o logout
-  void _fazerLogout() async {
-    await _authServico.deslogarUsuario(); // Chama o método de logout do serviço
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text("Logout realizado com sucesso!")),
-    );
-    // Após o logout, redireciona para a tela de login
-    Navigator.pushReplacementNamed(context, '/login');
-  }
-
-  // Função para adicionar ou editar uma nota
-  void _adicionarOuEditarNota([Nota? notaEditada]) async {
-    final nota = await showDialog<Nota>(
-      context: context,
-      builder: (BuildContext context) {
-        return DialogAdicionarNota(notaEditada: notaEditada);
-      },
-    );
-
-    if (nota != null) {
-      if (notaEditada == null) {
-        setState(() {
-          _notas.add(nota); // Adiciona a nova nota
-        });
-      } else {
-        setState(() {
-          int index = _notas.indexOf(notaEditada);
-          _notas[index] = nota; // Atualiza a nota editada
-        });
-      }
+    Widget page;
+    switch (index) {
+      case 1:
+        page = DiarioMedoPage();
+        break;
+      case 2:
+        page = HabitosPage();
+        break;
+      case 3:
+        page = MapasPage();
+        break;
+      default:
+        return;
     }
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) => page),
+    );
   }
 
-  // Função para excluir uma nota
- void _deletarNota(Nota nota) async {
-  User? user = FirebaseAuth.instance.currentUser;
-
-  if (user != null) {
-    try {
-      // Exclui a nota do Firestore
-      await FirebaseFirestore.instance
-          .collection('Notas')
-          .doc(user.uid)
-          .collection('usuario_notas')
-          .doc(nota.id)
-          .delete();
-
-      // Remove a nota localmente
-      setState(() {
-        _notas.remove(nota);
-      });
-
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Nota excluída com sucesso!")),
-      );
-    } catch (e) {
-      print("Erro ao excluir a nota: $e");
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Erro ao excluir a nota.")),
-      );
-    }
+  Future<void> _deletarNota(String idNota) async {
+    await FirebaseFirestore.instance.collection('notas').doc(idNota).delete();
   }
-}
 
+  void _logout() async {
+    await FirebaseAuth.instance.signOut();
+    Navigator.pushReplacementNamed(
+        context, '/login'); // Navega de volta para a página de login
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -146,53 +94,138 @@ class _NotasDiariasPageState extends State<NotasDiariasPage> {
       appBar: AppBar(
         backgroundColor: Colors.white,
         elevation: 0,
-        leading: const Icon(
-          Icons.person,
-          color: Colors.black,
+        leading: IconButton(
+          icon: Icon(Icons.person, color: Colors.black),
+          onPressed: () {},
         ),
         centerTitle: true,
-        title: const Text(
-          "Dez 2017",
-          style: TextStyle(
-            fontFamily: 'Poppins',
-            fontSize: 20,
-            fontWeight: FontWeight.bold,
-            color: Colors.black,
-          ),
+        title: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            IconButton(
+              icon: Icon(Icons.arrow_left, color: Colors.black),
+              onPressed: () {},
+            ),
+            Text(
+              _formattedDate,
+              style:
+                  TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
+            ),
+            IconButton(
+              icon: Icon(Icons.arrow_right, color: Colors.black),
+              onPressed: () {},
+            ),
+          ],
         ),
         actions: [
-          // Botão de logout na AppBar
           IconButton(
-            icon: const Icon(Icons.logout),
-            onPressed: _fazerLogout, // Chama a função de logout
+            icon: Icon(Icons.close, color: Colors.black),
+            onPressed: _removerFiltros,
+          ),
+          IconButton(
+            icon: Icon(Icons.logout, color: Colors.black), // Ícone de logout
+            onPressed: _logout, // Função de logout
           ),
         ],
       ),
-      body: _notas.isEmpty
-          ? const Center(child: Text('Nenhuma nota cadastrada.'))
-          : ListView.builder(
-              itemCount: _notas.length,
-              itemBuilder: (context, index) {
-                final nota = _notas[index];
-                return Card(
-                  child: ListTile(
-                    title: Text(nota.titulo),
-                    subtitle: Text('${nota.data.toLocal()} - ${nota.texto}'),
-                    onTap: () {
-                      _adicionarOuEditarNota(
-                          nota); // Abre o diálogo para editar a nota
+      body: StreamBuilder<QuerySnapshot>(
+        stream: FirebaseFirestore.instance
+            .collection('notas')
+            .where('emailUsuario', isEqualTo: userEmail)
+            .snapshots(),
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return Center(child: CircularProgressIndicator());
+          }
+          if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+            return Center(
+              child: Text(
+                'Nenhuma nota encontrada!',
+                style: TextStyle(color: Colors.black45, fontSize: 16),
+              ),
+            );
+          }
+
+          final notas = snapshot.data!.docs;
+
+          return ListView.builder(
+            padding: const EdgeInsets.all(8.0),
+            itemCount: notas.length,
+            itemBuilder: (context, index) {
+              final nota = notas[index];
+              return Dismissible(
+                key: Key(nota.id),
+                direction: DismissDirection.endToStart,
+                background: Container(
+                  color: Colors.red,
+                  alignment: Alignment.centerRight,
+                  padding: const EdgeInsets.symmetric(horizontal: 20),
+                  child: const Icon(Icons.delete, color: Colors.white),
+                ),
+                confirmDismiss: (direction) async {
+                  return await showDialog(
+                    context: context,
+                    builder: (BuildContext context) {
+                      return AlertDialog(
+                        title: const Text("Confirmar exclusão"),
+                        content:
+                            Text("Tem certeza que deseja excluir esta nota?"),
+                        actions: [
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              TextButton(
+                                onPressed: () =>
+                                    Navigator.of(context).pop(false),
+                                child: const Text("Não"),
+                              ),
+                              TextButton(
+                                onPressed: () =>
+                                    Navigator.of(context).pop(true),
+                                child: const Text("Sim"),
+                              ),
+                            ],
+                          ),
+                        ],
+                      );
                     },
-                    trailing: IconButton(
-                      icon: const Icon(Icons.delete),
-                      onPressed: () => _deletarNota(nota), // Deleta a nota
+                  );
+                },
+                onDismissed: (direction) {
+                  _deletarNota(nota.id);
+                },
+                child: Card(
+                  margin: const EdgeInsets.symmetric(vertical: 8.0),
+                  child: ListTile(
+                    title: Text(nota['titulo'] ?? 'Sem título'),
+                    subtitle: Text(nota['nota'] ?? 'Sem conteúdo'),
+                    trailing: Text(
+                      nota['dataCriacao'] != null
+                          ? DateFormat('dd/MM/yyyy').format(
+                              (nota['dataCriacao'] as Timestamp).toDate())
+                          : 'Sem data',
                     ),
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => EditarNotaPage(
+                            idNota: nota.id,
+                            titulo: nota['titulo'],
+                            conteudo: nota['nota'],
+                          ),
+                        ),
+                      );
+                    },
                   ),
-                );
-              },
-            ),
+                ),
+              );
+            },
+          );
+        },
+      ),
       floatingActionButton: FloatingActionButton(
-        onPressed: () =>
-            _adicionarOuEditarNota(), // Abre o diálogo para adicionar uma nova nota
+        onPressed: () => _adicionarNota(context),
         backgroundColor: Colors.purple,
         child: const Icon(
           Icons.add,
@@ -201,161 +234,20 @@ class _NotasDiariasPageState extends State<NotasDiariasPage> {
       ),
       bottomNavigationBar: BottomNavigationBar(
         type: BottomNavigationBarType.fixed,
-        backgroundColor: const Color(0xFFE1BEE7), // Fundo lilás claro
-        selectedItemColor: Colors.black,
-        unselectedItemColor: Colors.black45,
-        selectedFontSize: 14,
-        unselectedFontSize: 14,
+        backgroundColor: Colors.purple.shade100,
+        selectedItemColor: Colors.purple,
+        unselectedItemColor: Colors.black,
         onTap: _onItemTapped,
-        currentIndex: _selectedIndex,
-        items: const [
+        items: [
           BottomNavigationBarItem(
-            icon: Icon(Icons.note_alt_outlined),
-            label: "Notas diárias",
-          ),
+              icon: Icon(Icons.note), label: 'Notas diárias'),
           BottomNavigationBarItem(
-            icon: Icon(Icons.emoji_emotions_outlined),
-            label: "Diário do medo",
-          ),
+              icon: Icon(Icons.person_outline), label: 'Diário do medo'),
           BottomNavigationBarItem(
-            icon: Icon(Icons.calendar_today_outlined),
-            label: "Hábitos",
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.map_outlined),
-            label: "Maps",
-          ),
+              icon: Icon(Icons.calendar_today), label: 'Hábitos'),
+          BottomNavigationBarItem(icon: Icon(Icons.map), label: 'Maps'),
         ],
       ),
-    );
-  }
-}
-
-class DialogAdicionarNota extends StatefulWidget {
-  final Nota? notaEditada;
-
-  DialogAdicionarNota({this.notaEditada});
-
-  @override
-  _DialogAdicionarNotaState createState() => _DialogAdicionarNotaState();
-}
-
-class _DialogAdicionarNotaState extends State<DialogAdicionarNota> {
-  final _tituloController = TextEditingController();
-  final _textoController = TextEditingController();
-  DateTime _dataSelecionada = DateTime.now();
-
-  final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
-
-  @override
-  void initState() {
-    super.initState();
-    if (widget.notaEditada != null) {
-      _tituloController.text = widget.notaEditada!.titulo;
-      _textoController.text = widget.notaEditada!.texto;
-      _dataSelecionada = widget.notaEditada!.data;
-    }
-  }
-  
-
-  // Função para salvar a nota
-  void _salvarNota() async {
-  if (_formKey.currentState!.validate()) {
-    final User? user = FirebaseAuth.instance.currentUser;
-
-    if (user != null) {
-      final novaNota = Nota(
-        id: '', // Será gerado pelo Firestore
-        titulo: _tituloController.text,
-        data: _dataSelecionada,
-        texto: _textoController.text,
-      );
-
-      try {
-        DocumentReference docRef = await FirebaseFirestore.instance
-            .collection('Notas')
-            .doc(user.uid)
-            .collection('usuario_notas')
-            .add(novaNota.toMap());
-
-        novaNota.id = docRef.id; // Atualiza o ID da nota localmente
-
-        Navigator.of(context).pop(novaNota); // Retorna a nota salva
-      } catch (e) {
-        print("Erro ao salvar a nota: $e");
-      }
-    }
-  }
-}
-
-  @override
-  Widget build(BuildContext context) {
-    return AlertDialog(
-      title:
-          Text(widget.notaEditada == null ? 'Adicionar Nota' : 'Editar Nota'),
-      content: Form(
-        key: _formKey,
-        child: SingleChildScrollView(
-          child: Column(
-            children: [
-              // Campo para o título
-              TextFormField(
-                controller: _tituloController,
-                decoration: InputDecoration(labelText: 'Título'),
-                validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return 'O título não pode ser vazio';
-                  }
-                  return null;
-                },
-              ),
-              // Seletor de data
-              ListTile(
-                title: Text(
-                    'Data: ${_dataSelecionada.toLocal().toString().split(' ')[0]}'),
-                trailing: Icon(Icons.calendar_today),
-                onTap: () async {
-                  DateTime? novaData = await showDatePicker(
-                    context: context,
-                    initialDate: _dataSelecionada,
-                    firstDate: DateTime(2000),
-                    lastDate: DateTime(2101),
-                  );
-                  if (novaData != null && novaData != _dataSelecionada) {
-                    setState(() {
-                      _dataSelecionada = novaData;
-                    });
-                  }
-                },
-              ),
-              // Campo para o texto
-              TextFormField(
-                controller: _textoController,
-                decoration: InputDecoration(labelText: 'Texto'),
-                maxLines: 5,
-                validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return 'O texto não pode ser vazio';
-                  }
-                  return null;
-                },
-              ),
-            ],
-          ),
-        ),
-      ),
-      actions: [
-        TextButton(
-          onPressed: () {
-            Navigator.of(context).pop(); // Cancela
-          },
-          child: Text('Cancelar'),
-        ),
-        ElevatedButton(
-          onPressed: _salvarNota,
-          child: Text(widget.notaEditada == null ? 'Salvar' : 'Atualizar'),
-        ),
-      ],
     );
   }
 }
