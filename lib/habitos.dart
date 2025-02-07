@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:projeto_dsi/diario_medo.dart';
 import 'package:projeto_dsi/entrada_habitos.dart';
 import 'package:projeto_dsi/mapas.dart';
+import 'package:projeto_dsi/perfil.dart';
 import 'notas_diarias.dart';
 import 'servicos/autenticacao.dart'; // Importa o serviço de autenticação
 import 'package:cloud_firestore/cloud_firestore.dart'; // Para Firestore
@@ -266,9 +267,17 @@ class _HabitosPageState extends State<HabitosPage> {
       appBar: AppBar(
         backgroundColor: Colors.white,
         elevation: 0,
-        leading: const Icon(
-          Icons.person,
-          color: Colors.black,
+        leading: IconButton(
+          icon: Icon(
+            Icons.person,
+            color: Colors.black,
+          ),
+          onPressed: (){
+            Navigator.push(
+              context, 
+              MaterialPageRoute(builder: (context) => TelaPerfil()),
+              );
+          },
         ),
         centerTitle: true,
         title: const Text(
