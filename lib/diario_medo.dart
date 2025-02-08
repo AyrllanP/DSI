@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:projeto_dsi/habitos.dart';
 import 'package:projeto_dsi/mapas.dart';
+import 'package:projeto_dsi/perfil.dart';
 import 'notas_diarias.dart';
 import 'servicos/autenticacao.dart'; // Importa o serviço de autenticação
 
@@ -64,9 +65,21 @@ class _DiarioMedoPageState extends State<DiarioMedoPage> {
       appBar: AppBar(
         backgroundColor: Colors.white,
         elevation: 0,
-        leading: const Icon(
-          Icons.person,
-          color: Colors.black,
+        // leading: const Icon(
+        //   Icons.person,
+        //   color: Colors.black,
+        // ),
+        leading: IconButton(
+          icon: Icon(
+            Icons.person,
+            color: Colors.black,
+          ),
+          onPressed: (){
+            Navigator.push(
+              context, 
+              MaterialPageRoute(builder: (context) => TelaPerfil()),
+              );
+          },
         ),
         centerTitle: true,
         title: const Text(

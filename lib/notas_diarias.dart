@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:intl/intl.dart';
+import 'package:projeto_dsi/perfil.dart';
 import 'notas_diarias_page.dart';
 import 'package:projeto_dsi/mapas.dart';
 import 'package:projeto_dsi/diario_medo.dart';
@@ -95,8 +96,16 @@ class _NotasDiariaPageState extends State<NotasDiariaPage> {
         backgroundColor: Colors.white,
         elevation: 0,
         leading: IconButton(
-          icon: Icon(Icons.person, color: Colors.black),
-          onPressed: () {},
+          icon: Icon(
+            Icons.person,
+            color: Colors.black,
+          ),
+          onPressed: (){
+            Navigator.push(
+              context, 
+              MaterialPageRoute(builder: (context) => TelaPerfil()),
+              );
+          },
         ),
         centerTitle: true,
         title: Row(
