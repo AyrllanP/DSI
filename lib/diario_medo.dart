@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:projeto_dsi/habitos.dart';
 import 'package:projeto_dsi/mapas.dart';
 import 'package:projeto_dsi/perfil.dart';
 import 'notas_diarias.dart';
-import 'servicos/autenticacao.dart'; // Importa o serviço de autenticação
-
-class DiarioMedo {}
+import 'servicos/autenticacao.dart';
+import 'medo_page.dart';
 
 class DiarioMedoPage extends StatefulWidget {
   @override
@@ -14,16 +14,13 @@ class DiarioMedoPage extends StatefulWidget {
 
 class _DiarioMedoPageState extends State<DiarioMedoPage> {
   int _selectedIndex = 1;
-  final AutenticacaoServico _authServico =
-      AutenticacaoServico(); // Instância do serviço de autenticação
+  final AutenticacaoServico _authServico = AutenticacaoServico();
 
-  // Função para fazer o logout
   void _fazerLogout() async {
-    await _authServico.deslogarUsuario(); // Chama o método de logout do serviço
+    await _authServico.deslogarUsuario();
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(content: Text("Logout realizado com sucesso!")),
     );
-    // Após o logout, redireciona para a tela de login
     Navigator.pushReplacementNamed(context, '/login');
   }
 
@@ -35,21 +32,18 @@ class _DiarioMedoPageState extends State<DiarioMedoPage> {
           MaterialPageRoute(builder: (context) => NotasDiariaPage()),
         );
         break;
-
       case 1:
         Navigator.pushReplacement(
           context,
           MaterialPageRoute(builder: (context) => DiarioMedoPage()),
         );
         break;
-
       case 2:
         Navigator.pushReplacement(
           context,
           MaterialPageRoute(builder: (context) => HabitosPage()),
         );
         break;
-
       case 3:
         Navigator.pushReplacement(
           context,
@@ -65,66 +59,127 @@ class _DiarioMedoPageState extends State<DiarioMedoPage> {
       appBar: AppBar(
         backgroundColor: Colors.white,
         elevation: 0,
-        // leading: const Icon(
-        //   Icons.person,
-        //   color: Colors.black,
-        // ),
         leading: IconButton(
-          icon: Icon(
-            Icons.person,
-            color: Colors.black,
-          ),
-          onPressed: (){
+          icon: Icon(Icons.person, color: Colors.black),
+          onPressed: () {
             Navigator.push(
-              context, 
+              context,
               MaterialPageRoute(builder: (context) => TelaPerfil()),
-              );
+            );
           },
         ),
         centerTitle: true,
-        title: const Text(
-          "Dez 2017",
-          style: TextStyle(
-            fontFamily: 'Poppins',
-            fontSize: 20,
-            fontWeight: FontWeight.bold,
-            color: Colors.black,
-          ),
+        title: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(Icons.arrow_left, color: Colors.black),
+            Text(
+              "Dez 2017",
+              style: TextStyle(
+                fontFamily: 'Poppins',
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+                color: Colors.black,
+              ),
+            ),
+            Icon(Icons.arrow_right, color: Colors.black),
+          ],
         ),
         actions: [
-          // Botão de logout na AppBar
           IconButton(
-            icon: const Icon(Icons.logout),
-            onPressed: _fazerLogout, // Chama a função de logout
+            icon: Icon(Icons.search, color: Colors.black),
+            onPressed: () {},
           ),
         ],
       ),
-      body: const Center(child: Text('Diário do Medo')),
+      body: Container(
+        color: Colors.grey.shade300,
+        padding: EdgeInsets.all(8.0),
+        child: ListView.builder(
+          itemCount: 3,
+          itemBuilder: (context, index) {
+            return Card(
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Padding(
+                padding: EdgeInsets.all(16.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Icon(FontAwesomeIcons.skull,
+                            color: Colors.red, size: 30),
+                        SizedBox(width: 8),
+                        Text(
+                          "Medo",
+                          style: TextStyle(
+                            fontSize: 22,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.red,
+                          ),
+                        ),
+                      ],
+                    ),
+                    SizedBox(height: 10),
+                    Text(
+                      "Preocupação:",
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    Text("Não dever ao Agiota"),
+                    SizedBox(height: 10),
+                    Text(
+                      "Benefícios do sucesso:",
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    Text("Não dever"),
+                  ],
+                ),
+              ),
+            );
+          },
+        ),
+      ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (context) => MedoPage()),
+          );
+        },
+        backgroundColor: Colors.purple,
+        child: Icon(Icons.add, color: Colors.white),
+      ),
       bottomNavigationBar: BottomNavigationBar(
         type: BottomNavigationBarType.fixed,
-        backgroundColor: const Color(0xFFE1BEE7), // Fundo lilás claro
-        selectedItemColor: Colors.black,
-        unselectedItemColor: Colors.black45,
-        selectedFontSize: 14,
-        unselectedFontSize: 14,
+        backgroundColor: Colors.purple.shade100,
+        selectedItemColor: Colors.purple,
+        unselectedItemColor: Colors.black,
         onTap: _onItemTapped,
         currentIndex: _selectedIndex,
-        items: const [
+        items: [
           BottomNavigationBarItem(
-            icon: Icon(Icons.note_alt_outlined),
-            label: "Notas diárias",
+            icon: Icon(Icons.note),
+            label: 'Notas diárias',
           ),
           BottomNavigationBarItem(
-            icon: Icon(Icons.emoji_emotions_outlined),
-            label: "Diário do medo",
+            icon: Icon(FontAwesomeIcons.skull),
+            label: 'Diário do medo',
           ),
           BottomNavigationBarItem(
-            icon: Icon(Icons.calendar_today_outlined),
-            label: "Hábitos",
+            icon: Icon(Icons.calendar_today),
+            label: 'Hábitos',
           ),
           BottomNavigationBarItem(
-            icon: Icon(Icons.map_outlined),
-            label: "Maps",
+            icon: Icon(Icons.map),
+            label: 'Maps',
           ),
         ],
       ),
