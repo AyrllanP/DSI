@@ -1,11 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
-import 'package:projeto_dsi/habitos.dart';
-import 'package:projeto_dsi/mapas.dart';
-import 'package:projeto_dsi/perfil.dart';
-import 'notas_diarias.dart';
-import 'servicos/autenticacao.dart';
 import 'medo_page.dart';
+import 'perfil.dart'; // Adicione essa linha no topo do arquivo diario_medo.dart
 
 class DiarioMedoPage extends StatefulWidget {
   @override
@@ -13,44 +11,28 @@ class DiarioMedoPage extends StatefulWidget {
 }
 
 class _DiarioMedoPageState extends State<DiarioMedoPage> {
-  int _selectedIndex = 1;
-  final AutenticacaoServico _authServico = AutenticacaoServico();
-
-  void _fazerLogout() async {
-    await _authServico.deslogarUsuario();
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text("Logout realizado com sucesso!")),
-    );
-    Navigator.pushReplacementNamed(context, '/login');
-  }
+  final user = FirebaseAuth.instance.currentUser;
+  int _selectedIndex = 1; // Índice inicial para "Diário do Medo"
 
   void _onItemTapped(int index) {
-    switch (index) {
-      case 0:
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (context) => NotasDiariaPage()),
-        );
-        break;
-      case 1:
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (context) => DiarioMedoPage()),
-        );
-        break;
-      case 2:
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (context) => HabitosPage()),
-        );
-        break;
-      case 3:
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (context) => MapasPage()),
-        );
-        break;
+    setState(() {
+      _selectedIndex = index;
+    });
+    // Aqui você pode adicionar a navegação para outras páginas conforme necessário.
+  }
+
+  Future<void> _deleteMedo(String idMedo) async {
+    try {
+      await FirebaseFirestore.instance.collection('medos').doc(idMedo).delete();
+    } catch (e) {
+      print("Erro ao excluir: $e");
     }
+  }
+
+  void _logout() async {
+    await FirebaseAuth.instance.signOut();
+    Navigator.pushReplacementNamed(
+        context, '/login'); // Navega de volta para a página de login
   }
 
   @override
@@ -60,11 +42,16 @@ class _DiarioMedoPageState extends State<DiarioMedoPage> {
         backgroundColor: Colors.white,
         elevation: 0,
         leading: IconButton(
-          icon: Icon(Icons.person, color: Colors.black),
+          icon: Icon(
+            Icons.person,
+            color: Colors.black,
+          ),
           onPressed: () {
             Navigator.push(
               context,
-              MaterialPageRoute(builder: (context) => TelaPerfil()),
+              MaterialPageRoute(
+                  builder: (context) =>
+                      TelaPerfil()), // Substitua TelaPerfil pela sua tela de perfil
             );
           },
         ),
@@ -72,80 +59,121 @@ class _DiarioMedoPageState extends State<DiarioMedoPage> {
         title: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(Icons.arrow_left, color: Colors.black),
             Text(
-              "Dez 2017",
-              style: TextStyle(
-                fontFamily: 'Poppins',
-                fontSize: 20,
-                fontWeight: FontWeight.bold,
-                color: Colors.black,
-              ),
+              'Diário dos Medos',
+              style:
+                  TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
             ),
-            Icon(Icons.arrow_right, color: Colors.black),
           ],
         ),
         actions: [
           IconButton(
-            icon: Icon(Icons.search, color: Colors.black),
-            onPressed: () {},
+            icon: Icon(Icons.logout, color: Colors.black), // Ícone de logout
+            onPressed: _logout, // Função de logout
           ),
         ],
       ),
-      body: Container(
-        color: Colors.grey.shade300,
-        padding: EdgeInsets.all(8.0),
-        child: ListView.builder(
-          itemCount: 3,
-          itemBuilder: (context, index) {
-            return Card(
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(10),
-              ),
-              child: Padding(
-                padding: EdgeInsets.all(16.0),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        Icon(FontAwesomeIcons.skull,
-                            color: Colors.red, size: 30),
-                        SizedBox(width: 8),
-                        Text(
-                          "Medo",
-                          style: TextStyle(
-                            fontSize: 22,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.red,
+      body: StreamBuilder(
+        stream: FirebaseFirestore.instance
+            .collection('medos')
+            .where('userId', isEqualTo: user?.uid)
+            .snapshots(),
+        builder: (context, AsyncSnapshot<QuerySnapshot> snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return Center(child: CircularProgressIndicator());
+          }
+          if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+            return Center(child: Text('Nenhum medo cadastrado.'));
+          }
+          return ListView.builder(
+            itemCount: snapshot.data!.docs.length,
+            itemBuilder: (context, index) {
+              var medo = snapshot.data!.docs[index];
+              return Dismissible(
+                key: Key(medo.id),
+                direction: DismissDirection.endToStart,
+                background: Container(
+                  color: Colors.red,
+                  alignment: Alignment.centerRight,
+                  padding: const EdgeInsets.symmetric(horizontal: 20),
+                  child: const Icon(Icons.delete, color: Colors.white),
+                ),
+                confirmDismiss: (direction) async {
+                  return await showDialog(
+                    context: context,
+                    builder: (BuildContext context) {
+                      return AlertDialog(
+                        title: const Text("Confirmar exclusão"),
+                        content:
+                            Text("Tem certeza que deseja excluir esta nota?"),
+                        actions: [
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              TextButton(
+                                onPressed: () =>
+                                    Navigator.of(context).pop(false),
+                                child: const Text("Não"),
+                              ),
+                              TextButton(
+                                onPressed: () {
+                                  Navigator.of(context).pop(true);
+                                  _deleteMedo(medo
+                                      .id); // Deleta a nota após confirmação
+                                },
+                                child: const Text("Sim"),
+                              ),
+                            ],
                           ),
-                        ),
+                        ],
+                      );
+                    },
+                  );
+                },
+                child: Card(
+                  margin: EdgeInsets.all(8.0),
+                  child: ListTile(
+                    leading: Icon(
+                      FontAwesomeIcons.skull,
+                      color: Colors.red, // Caveira vermelha
+                      size: 30,
+                    ),
+                    title: Text(medo['medo'] ?? 'Sem título'),
+                    subtitle: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                            'Preocupação: ${medo['preocupacao'] ?? 'Nenhuma'}'),
+                        Text('Prevenir: ${medo['prevenir'] ?? 'Nenhuma'}'),
+                        Text('Corrigir: ${medo['corrigir'] ?? 'Nenhuma'}'),
+                        Text(
+                            'Benefícios: ${medo['beneficios'] ?? 'Sem benefício'}'),
                       ],
                     ),
-                    SizedBox(height: 10),
-                    Text(
-                      "Preocupação:",
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                      ),
+                    trailing: IconButton(
+                      icon: Icon(Icons.edit),
+                      onPressed: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => MedoPage(
+                              idMedo: medo.id,
+                              medo: medo['medo'],
+                              preocupacao: medo['preocupacao'],
+                              prevenir: medo['prevenir'],
+                              corrigir: medo['corrigir'],
+                              beneficios: medo['beneficios'],
+                            ),
+                          ),
+                        );
+                      },
                     ),
-                    Text("Não dever ao Agiota"),
-                    SizedBox(height: 10),
-                    Text(
-                      "Benefícios do sucesso:",
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    Text("Não dever"),
-                  ],
+                  ),
                 ),
-              ),
-            );
-          },
-        ),
+              );
+            },
+          );
+        },
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: () {
