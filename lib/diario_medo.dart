@@ -2,6 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:projeto_dsi/habitos.dart';
+import 'package:projeto_dsi/mapas.dart';
+import 'package:projeto_dsi/notas_diarias.dart';
 import 'medo_page.dart';
 import 'perfil.dart'; // Adicione essa linha no topo do arquivo diario_medo.dart
 
@@ -15,11 +18,34 @@ class _DiarioMedoPageState extends State<DiarioMedoPage> {
   int _selectedIndex = 1; // Índice inicial para "Diário do Medo"
 
   void _onItemTapped(int index) {
-    setState(() {
-      _selectedIndex = index;
-    });
-    // Aqui você pode adicionar a navegação para outras páginas conforme necessário.
+    switch (index) {
+      case 0:
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => NotasDiariaPage()),
+        );
+        break;
+      case 1:
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => DiarioMedoPage()),
+        );
+        break;
+      case 2:
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => HabitosPage()),
+        );
+        break;
+      case 3:
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => MapasPage()),
+        );
+        break;
+    }
   }
+
 
   Future<void> _deleteMedo(String idMedo) async {
     try {

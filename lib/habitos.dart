@@ -8,6 +8,7 @@ import 'servicos/autenticacao.dart'; // Importa o serviço de autenticação
 import 'package:cloud_firestore/cloud_firestore.dart'; // Para Firestore
 import 'package:firebase_auth/firebase_auth.dart'; // Para autenticação
 import 'package:table_calendar/table_calendar.dart'; // Para usar o calendário
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 
 class Habito {
   String id;
@@ -433,8 +434,8 @@ class _HabitosPageState extends State<HabitosPage> {
             label: "Notas diárias",
           ),
           BottomNavigationBarItem(
-            icon: Icon(Icons.emoji_emotions_outlined),
-            label: "Diário do medo",
+            icon: Icon(FontAwesomeIcons.skull),
+            label: 'Diário do medo',
           ),
           BottomNavigationBarItem(
             icon: Icon(Icons.calendar_today_outlined),

@@ -7,6 +7,7 @@ import 'notas_diarias_page.dart';
 import 'package:projeto_dsi/mapas.dart';
 import 'package:projeto_dsi/diario_medo.dart';
 import 'package:projeto_dsi/habitos.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 
 class NotasDiariaPage extends StatefulWidget {
   @override
@@ -251,7 +252,9 @@ class _NotasDiariaPageState extends State<NotasDiariaPage> {
           BottomNavigationBarItem(
               icon: Icon(Icons.note), label: 'Notas diárias'),
           BottomNavigationBarItem(
-              icon: Icon(Icons.person_outline), label: 'Diário do medo'),
+            icon: Icon(FontAwesomeIcons.skull),
+            label: 'Diário do medo',
+          ),
           BottomNavigationBarItem(
               icon: Icon(Icons.calendar_today), label: 'Hábitos'),
           BottomNavigationBarItem(icon: Icon(Icons.map), label: 'Maps'),

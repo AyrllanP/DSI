@@ -9,6 +9,7 @@ import 'package:projeto_dsi/habitos.dart';
 import 'package:projeto_dsi/perfil.dart';
 import 'notas_diarias.dart';
 import 'servicos/autenticacao.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 
 class MapasPage extends StatefulWidget {
   @override
@@ -265,8 +266,8 @@ class _MapasPageState extends State<MapasPage> {
             label: "Notas diárias",
           ),
           BottomNavigationBarItem(
-            icon: Icon(Icons.emoji_emotions_outlined),
-            label: "Diário do medo",
+            icon: Icon(FontAwesomeIcons.skull),
+            label: 'Diário do medo',
           ),
           BottomNavigationBarItem(
             icon: Icon(Icons.calendar_today_outlined),
