@@ -262,6 +262,32 @@ class _HabitosPageState extends State<HabitosPage> {
     }
   }
 
+  // Para atualizar o status do hábito
+  Future<void> _atualizarStatusHabito(Habito habito, String dataAtual, bool value) async {
+    try {
+      setState(() {
+        habito.statusDiario[dataAtual] = value;
+      });
+      await FirebaseFirestore.instance
+          .collection('Habitos')
+          .doc(user!.uid)
+          .collection('usuario_habitos')
+          .doc(habito.id)
+          .update({
+        'statusDiario': habito.statusDiario,
+      });
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("Status do hábito atualizado!")),
+      );
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("Erro ao atualizar o status do hábito: $e")),
+      );
+    }
+  }
+
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -397,10 +423,7 @@ class _HabitosPageState extends State<HabitosPage> {
                                   ? habito.statusDiario[dataAtual]!
                                   : false,
                               onChanged: (bool? value) {
-                                setState(() {
-                                  habito.statusDiario[dataAtual] =
-                                      value ?? false;
-                                });
+                                _atualizarStatusHabito(habito, dataAtual, value ?? false);
                               },
                             ),
                           ),

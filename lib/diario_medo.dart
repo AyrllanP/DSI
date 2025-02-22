@@ -176,24 +176,21 @@ class _DiarioMedoPageState extends State<DiarioMedoPage> {
                             'Benefícios: ${medo['beneficios'] ?? 'Sem benefício'}'),
                       ],
                     ),
-                    trailing: IconButton(
-                      icon: Icon(Icons.edit),
-                      onPressed: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => MedoPage(
-                              idMedo: medo.id,
-                              medo: medo['medo'],
-                              preocupacao: medo['preocupacao'],
-                              prevenir: medo['prevenir'],
-                              corrigir: medo['corrigir'],
-                              beneficios: medo['beneficios'],
-                            ),
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => MedoPage(
+                            idMedo: medo.id,
+                            medo: medo['medo'],
+                            preocupacao: medo['preocupacao'],
+                            prevenir: medo['prevenir'],
+                            corrigir: medo['corrigir'],
+                            beneficios: medo['beneficios'],
                           ),
-                        );
-                      },
-                    ),
+                        ),
+                      );
+                    },
                   ),
                 ),
               );

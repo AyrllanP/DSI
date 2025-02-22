@@ -90,6 +90,24 @@ class _NotasDiariaPageState extends State<NotasDiariaPage> {
         context, '/login'); // Navega de volta para a página de login
   }
 
+  // Tentando adicionar emojis
+  final List<IconData> _emojis = [
+    Icons.sentiment_dissatisfied,
+    Icons.sentiment_satisfied,
+    Icons.sentiment_very_dissatisfied,
+    Icons.sentiment_neutral,
+    Icons.sentiment_very_satisfied,
+  ];
+
+  // E as cores certas
+  final List<Color> _emojiColors = [
+    Colors.red.shade300,
+    Colors.green.shade300,
+    Colors.red.shade900,
+    Colors.blue.shade300,
+    Colors.green.shade800,
+  ];
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -163,6 +181,11 @@ class _NotasDiariaPageState extends State<NotasDiariaPage> {
             itemCount: notas.length,
             itemBuilder: (context, index) {
               final nota = notas[index];
+              
+              final emojiIndex = nota['emojiSelecionado'] ?? 0; 
+              final emoji = _emojis[emojiIndex]; 
+              final emojiColor = _emojiColors[emojiIndex]; 
+              
               return Dismissible(
                 key: Key(nota.id),
                 direction: DismissDirection.endToStart,
@@ -207,6 +230,11 @@ class _NotasDiariaPageState extends State<NotasDiariaPage> {
                 child: Card(
                   margin: const EdgeInsets.symmetric(vertical: 8.0),
                   child: ListTile(
+                    leading: Icon(
+                      emoji, 
+                      color: emojiColor, 
+                      size: 36, 
+                    ),
                     title: Text(nota['titulo'] ?? 'Sem título'),
                     subtitle: Text(nota['nota'] ?? 'Sem conteúdo'),
                     trailing: Text(
