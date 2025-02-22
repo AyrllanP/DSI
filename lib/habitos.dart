@@ -421,9 +421,9 @@ class _HabitosPageState extends State<HabitosPage> {
       ),
       bottomNavigationBar: BottomNavigationBar(
         type: BottomNavigationBarType.fixed,
-        backgroundColor: const Color(0xFFE1BEE7),
-        selectedItemColor: Colors.black,
-        unselectedItemColor: Colors.black45,
+        backgroundColor: Colors.purple.shade100,
+        selectedItemColor: Colors.purple,
+        unselectedItemColor: Colors.black,
         selectedFontSize: 14,
         unselectedFontSize: 14,
         onTap: _onItemTapped,
