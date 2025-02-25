@@ -9,6 +9,7 @@ import 'package:cloud_firestore/cloud_firestore.dart'; // Para Firestore
 import 'package:firebase_auth/firebase_auth.dart'; // Para autenticação
 import 'package:table_calendar/table_calendar.dart'; // Para usar o calendário
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:intl/intl.dart'; // formatar data
 
 class Habito {
   String id;
@@ -68,6 +69,9 @@ class _HabitosPageState extends State<HabitosPage> {
   // Tratar questões do calendário
   DateTime _selectedDay = DateTime.now();
   DateTime _focusedDay = DateTime.now();
+
+  // Visibilidade do calendário
+  bool _calendarioVisivel = true;
 
   // Usuário cadastrado no firebase
   final User? user = FirebaseAuth.instance.currentUser;
@@ -287,6 +291,12 @@ class _HabitosPageState extends State<HabitosPage> {
     }
   }
 
+  // Visibilidade do calendário
+  void _alternarVisibilidadeCalendario() {
+    setState(() {
+      _calendarioVisivel = !_calendarioVisivel;
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -317,6 +327,12 @@ class _HabitosPageState extends State<HabitosPage> {
           ),
         ),
         actions: [
+          IconButton(
+            icon: Icon(
+              _calendarioVisivel ? Icons.arrow_drop_up : Icons.arrow_drop_down,
+            ),
+            onPressed: _alternarVisibilidadeCalendario,
+          ),
           // Botão de logout na AppBar
           IconButton(
             icon: const Icon(Icons.logout),
@@ -326,6 +342,7 @@ class _HabitosPageState extends State<HabitosPage> {
       ),
       body: Column(
         children: [
+          if(_calendarioVisivel)
           TableCalendar(
             locale: 'pt_BR',
             firstDay: DateTime(2020, 1, 1),
@@ -358,6 +375,17 @@ class _HabitosPageState extends State<HabitosPage> {
             ),
           ),
           const SizedBox(height: 16),
+          // Para mostrar a data ao minimizar
+          if(!_calendarioVisivel)
+            Text(
+              '${DateFormat("d 'de' MMMM 'de' y", 'pt_BR').format(_selectedDay)}',
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+                color: Colors.black,
+              ),
+            ),
+            const SizedBox(height: 16),
           // Crud - Ler
           Expanded(
             child: _habitos.isEmpty
