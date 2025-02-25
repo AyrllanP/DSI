@@ -6,7 +6,7 @@ import 'package:projeto_dsi/habitos.dart';
 import 'package:projeto_dsi/mapas.dart';
 import 'package:projeto_dsi/notas_diarias.dart';
 import 'medo_page.dart';
-import 'perfil.dart'; // Adicione essa linha no topo do arquivo diario_medo.dart
+import 'perfil.dart';
 
 class DiarioMedoPage extends StatefulWidget {
   @override
@@ -16,7 +16,24 @@ class DiarioMedoPage extends StatefulWidget {
 class _DiarioMedoPageState extends State<DiarioMedoPage> {
   final user = FirebaseAuth.instance.currentUser;
   int _selectedIndex = 1; // Índice inicial para "Diário do Medo"
+  String _keyword = ""; // Variável para armazenar a palavra-chave
+  bool _isSearching = false;
+  // Método para atualizar a palavra-chave
+  void _updateKeyword(String keyword) {
+    setState(() {
+      _keyword = keyword;
+    });
+  }
 
+  void _toggleSearch() {
+    setState(() {
+      _isSearching = !_isSearching;
+      if (!_isSearching) {
+        _updateKeyword(""); // Limpa a palavra-chave ao fechar a pesquisa
+      }
+    });
+  }
+  
   void _onItemTapped(int index) {
     switch (index) {
       case 0:
@@ -46,7 +63,6 @@ class _DiarioMedoPageState extends State<DiarioMedoPage> {
     }
   }
 
-
   Future<void> _deleteMedo(String idMedo) async {
     try {
       await FirebaseFirestore.instance.collection('medos').doc(idMedo).delete();
@@ -57,8 +73,7 @@ class _DiarioMedoPageState extends State<DiarioMedoPage> {
 
   void _logout() async {
     await FirebaseAuth.instance.signOut();
-    Navigator.pushReplacementNamed(
-        context, '/login'); // Navega de volta para a página de login
+    Navigator.pushReplacementNamed(context, '/login');
   }
 
   @override
@@ -76,26 +91,45 @@ class _DiarioMedoPageState extends State<DiarioMedoPage> {
             Navigator.push(
               context,
               MaterialPageRoute(
-                  builder: (context) =>
-                      TelaPerfil()), // Substitua TelaPerfil pela sua tela de perfil
+                builder: (context) => TelaPerfil(),
+              ),
             );
           },
         ),
         centerTitle: true,
-        title: Row(
+        title: _isSearching
+        ? Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Text(
-              'Diário dos Medos',
-              style:
-                  TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
+            Expanded(
+              child: TextField(
+                decoration: InputDecoration(
+                  hintText: 'Pesquisar por palavra-chave...',
+                  border: InputBorder.none,
+                ),
+                onChanged: _updateKeyword, // Atualiza a palavra-chave ao digitar
+              ),
             ),
           ],
-        ),
+        ): Text(
+                'Diário do Medo',
+                style: TextStyle(
+                  color: Colors.black,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
         actions: [
           IconButton(
-            icon: Icon(Icons.logout, color: Colors.black), // Ícone de logout
-            onPressed: _logout, // Função de logout
+            icon: Icon(
+              _isSearching ? Icons.close : Icons.search, 
+              color: Colors.black,
+            ),
+            onPressed: _toggleSearch, 
+          ),
+
+          IconButton(
+            icon: Icon(Icons.logout, color: Colors.black),
+            onPressed: _logout,
           ),
         ],
       ),
@@ -111,10 +145,31 @@ class _DiarioMedoPageState extends State<DiarioMedoPage> {
           if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
             return Center(child: Text('Nenhum medo cadastrado.'));
           }
+
+          // Filtra os documentos localmente com base na palavra-chave
+          final filteredDocs = snapshot.data!.docs.where((doc) {
+            final medo = doc['medo']?.toString().toLowerCase() ?? '';
+            final preocupacao = doc['preocupacao']?.toString().toLowerCase() ?? '';
+            final prevenir = doc['prevenir']?.toString().toLowerCase() ?? '';
+            final corrigir = doc['corrigir']?.toString().toLowerCase() ?? '';
+            final beneficios = doc['beneficios']?.toString().toLowerCase() ?? '';
+
+            // Verifica se a palavra-chave está em qualquer um dos campos
+            return medo.contains(_keyword.toLowerCase()) ||
+                   preocupacao.contains(_keyword.toLowerCase()) ||
+                   prevenir.contains(_keyword.toLowerCase()) ||
+                   corrigir.contains(_keyword.toLowerCase()) ||
+                   beneficios.contains(_keyword.toLowerCase());
+          }).toList();
+
+          if (filteredDocs.isEmpty) {
+            return Center(child: Text('Nenhum resultado encontrado.'));
+          }
+
           return ListView.builder(
-            itemCount: snapshot.data!.docs.length,
+            itemCount: filteredDocs.length,
             itemBuilder: (context, index) {
-              var medo = snapshot.data!.docs[index];
+              var medo = filteredDocs[index];
               return Dismissible(
                 key: Key(medo.id),
                 direction: DismissDirection.endToStart,
@@ -130,22 +185,19 @@ class _DiarioMedoPageState extends State<DiarioMedoPage> {
                     builder: (BuildContext context) {
                       return AlertDialog(
                         title: const Text("Confirmar exclusão"),
-                        content:
-                            Text("Tem certeza que deseja excluir esta nota?"),
+                        content: Text("Tem certeza que deseja excluir esta nota?"),
                         actions: [
                           Row(
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
                               TextButton(
-                                onPressed: () =>
-                                    Navigator.of(context).pop(false),
+                                onPressed: () => Navigator.of(context).pop(false),
                                 child: const Text("Não"),
                               ),
                               TextButton(
                                 onPressed: () {
                                   Navigator.of(context).pop(true);
-                                  _deleteMedo(medo
-                                      .id); // Deleta a nota após confirmação
+                                  _deleteMedo(medo.id); // Deleta a nota após confirmação
                                 },
                                 child: const Text("Sim"),
                               ),
@@ -161,19 +213,17 @@ class _DiarioMedoPageState extends State<DiarioMedoPage> {
                   child: ListTile(
                     leading: Icon(
                       FontAwesomeIcons.skull,
-                      color: Colors.red, // Caveira vermelha
+                      color: Colors.red,
                       size: 30,
                     ),
                     title: Text(medo['medo'] ?? 'Sem título'),
                     subtitle: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(
-                            'Preocupação: ${medo['preocupacao'] ?? 'Nenhuma'}'),
+                        Text('Preocupação: ${medo['preocupacao'] ?? 'Nenhuma'}'),
                         Text('Prevenir: ${medo['prevenir'] ?? 'Nenhuma'}'),
                         Text('Corrigir: ${medo['corrigir'] ?? 'Nenhuma'}'),
-                        Text(
-                            'Benefícios: ${medo['beneficios'] ?? 'Sem benefício'}'),
+                        Text('Benefícios: ${medo['beneficios'] ?? 'Sem benefício'}'),
                       ],
                     ),
                     onTap: () {

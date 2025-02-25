@@ -377,13 +377,39 @@ class _HabitosPageState extends State<HabitosPage> {
           const SizedBox(height: 16),
           // Para mostrar a data ao minimizar
           if(!_calendarioVisivel)
-            Text(
-              '${DateFormat("d 'de' MMMM 'de' y", 'pt_BR').format(_selectedDay)}',
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-                color: Colors.black,
-              ),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                // Botão para retroceder um dia
+                IconButton(
+                  iconSize: 15, 
+                  icon: Icon(Icons.arrow_back_ios),
+                  onPressed: () {
+                    setState(() {
+                      _selectedDay = _selectedDay.subtract(Duration(days: 1));
+                    });
+                  },
+                ),
+                // Texto com a data formatada
+                Text(
+                  '${DateFormat("d 'de' MMMM 'de' y", 'pt_BR').format(_selectedDay)}',
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.black,
+                  ),
+                ),
+                // Botão para avançar um dia
+                IconButton(
+                  iconSize: 15, 
+                  icon: Icon(Icons.arrow_forward_ios),
+                  onPressed: () {
+                    setState(() {
+                      _selectedDay = _selectedDay.add(Duration(days: 1));
+                    });
+                  },
+                ),
+              ],
             ),
             const SizedBox(height: 16),
           // Crud - Ler
