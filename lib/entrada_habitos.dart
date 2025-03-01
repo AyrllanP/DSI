@@ -105,30 +105,40 @@ class _EntradaHabitosPageState extends State<EntradaHabitosPage> {
                 "Selecione os dias:",
                 style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
               ),
-              Wrap(
-                spacing: 8,
+              const SizedBox(height: 20),
+              Center (child: Wrap(
+                spacing: 10,
+                runSpacing: 10, // Espaçamento vertical entre as linhas de chips
+                alignment: WrapAlignment.center,
                 children: ["dom", "seg", "ter", "qua", "qui", "sex", "sáb"]
-                    .map((dia) => ChoiceChip(
+                    .map((dia) => ActionChip(
                           label: Text(dia),
-                          selected: _diasSelecionados.contains(dia),
-                          onSelected: (selected) {
+                          backgroundColor: _diasSelecionados.contains(dia) ? Colors.purple : Colors.grey[300], // Fundo roxo quando selecionado
+                          labelStyle: TextStyle(
+                            color: _diasSelecionados.contains(dia) ? Colors.white : Colors.black, // Texto branco quando selecionado
+                          ),
+                          onPressed: () {
                             setState(() {
-                               int maxDiasPermitidos = _getLimiteDiasPorFrequencia(_frequenciaSelecionada!);
+                              int maxDiasPermitidos = _getLimiteDiasPorFrequencia(_frequenciaSelecionada!);
 
-                                if (selected) {
-                                  if (_diasSelecionados.length < maxDiasPermitidos) {
-                                    _diasSelecionados.add(dia);
-                                  } else {
-                                    ScaffoldMessenger.of(context).showSnackBar(
-                                      SnackBar(content: Text("Você só pode escolher $maxDiasPermitidos dia(s).")),
-                                    );
-                                  }
+                              if (_diasSelecionados.contains(dia)) {
+                                // Se o dia já está selecionado, remove-o
+                                _diasSelecionados.remove(dia);
+                              } else {
+                                // Se o dia não está selecionado, adiciona-o (se não ultrapassar o limite)
+                                if (_diasSelecionados.length < maxDiasPermitidos) {
+                                  _diasSelecionados.add(dia);
                                 } else {
-                                  _diasSelecionados.remove(dia);
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(content: Text("Você só pode escolher $maxDiasPermitidos dia(s).")),
+                                  );
                                 }
+                              }
                             });
                           },
-                        )).toList(),
+                        ))
+                    .toList(),
+              ),
               ),
               const SizedBox(height: 20),
             ],

@@ -8,6 +8,8 @@ import 'servicos/autenticacao.dart'; // Importa o serviço de autenticação
 import 'package:cloud_firestore/cloud_firestore.dart'; // Para Firestore
 import 'package:firebase_auth/firebase_auth.dart'; // Para autenticação
 import 'package:table_calendar/table_calendar.dart'; // Para usar o calendário
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:intl/intl.dart'; // formatar data
 
 class Habito {
   String id;
@@ -67,6 +69,9 @@ class _HabitosPageState extends State<HabitosPage> {
   // Tratar questões do calendário
   DateTime _selectedDay = DateTime.now();
   DateTime _focusedDay = DateTime.now();
+
+  // Visibilidade do calendário
+  bool _calendarioVisivel = true;
 
   // Usuário cadastrado no firebase
   final User? user = FirebaseAuth.instance.currentUser;
@@ -261,6 +266,38 @@ class _HabitosPageState extends State<HabitosPage> {
     }
   }
 
+  // Para atualizar o status do hábito
+  Future<void> _atualizarStatusHabito(Habito habito, String dataAtual, bool value) async {
+    try {
+      setState(() {
+        habito.statusDiario[dataAtual] = value;
+      });
+      await FirebaseFirestore.instance
+          .collection('Habitos')
+          .doc(user!.uid)
+          .collection('usuario_habitos')
+          .doc(habito.id)
+          .update({
+        'statusDiario': habito.statusDiario,
+      });
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("Status do hábito atualizado!")),
+      );
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("Erro ao atualizar o status do hábito: $e")),
+      );
+    }
+  }
+
+  // Visibilidade do calendário
+  void _alternarVisibilidadeCalendario() {
+    setState(() {
+      _calendarioVisivel = !_calendarioVisivel;
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -290,6 +327,12 @@ class _HabitosPageState extends State<HabitosPage> {
           ),
         ),
         actions: [
+          IconButton(
+            icon: Icon(
+              _calendarioVisivel ? Icons.arrow_drop_up : Icons.arrow_drop_down,
+            ),
+            onPressed: _alternarVisibilidadeCalendario,
+          ),
           // Botão de logout na AppBar
           IconButton(
             icon: const Icon(Icons.logout),
@@ -299,6 +342,7 @@ class _HabitosPageState extends State<HabitosPage> {
       ),
       body: Column(
         children: [
+          if(_calendarioVisivel)
           TableCalendar(
             locale: 'pt_BR',
             firstDay: DateTime(2020, 1, 1),
@@ -331,6 +375,43 @@ class _HabitosPageState extends State<HabitosPage> {
             ),
           ),
           const SizedBox(height: 16),
+          // Para mostrar a data ao minimizar
+          if(!_calendarioVisivel)
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                // Botão para retroceder um dia
+                IconButton(
+                  iconSize: 15, 
+                  icon: Icon(Icons.arrow_back_ios),
+                  onPressed: () {
+                    setState(() {
+                      _selectedDay = _selectedDay.subtract(Duration(days: 1));
+                    });
+                  },
+                ),
+                // Texto com a data formatada
+                Text(
+                  '${DateFormat("d 'de' MMMM 'de' y", 'pt_BR').format(_selectedDay)}',
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.black,
+                  ),
+                ),
+                // Botão para avançar um dia
+                IconButton(
+                  iconSize: 15, 
+                  icon: Icon(Icons.arrow_forward_ios),
+                  onPressed: () {
+                    setState(() {
+                      _selectedDay = _selectedDay.add(Duration(days: 1));
+                    });
+                  },
+                ),
+              ],
+            ),
+            const SizedBox(height: 16),
           // Crud - Ler
           Expanded(
             child: _habitos.isEmpty
@@ -396,10 +477,7 @@ class _HabitosPageState extends State<HabitosPage> {
                                   ? habito.statusDiario[dataAtual]!
                                   : false,
                               onChanged: (bool? value) {
-                                setState(() {
-                                  habito.statusDiario[dataAtual] =
-                                      value ?? false;
-                                });
+                                _atualizarStatusHabito(habito, dataAtual, value ?? false);
                               },
                             ),
                           ),
@@ -420,9 +498,9 @@ class _HabitosPageState extends State<HabitosPage> {
       ),
       bottomNavigationBar: BottomNavigationBar(
         type: BottomNavigationBarType.fixed,
-        backgroundColor: const Color(0xFFE1BEE7),
-        selectedItemColor: Colors.black,
-        unselectedItemColor: Colors.black45,
+        backgroundColor: Colors.purple.shade100,
+        selectedItemColor: Colors.purple,
+        unselectedItemColor: Colors.black,
         selectedFontSize: 14,
         unselectedFontSize: 14,
         onTap: _onItemTapped,
@@ -433,8 +511,8 @@ class _HabitosPageState extends State<HabitosPage> {
             label: "Notas diárias",
           ),
           BottomNavigationBarItem(
-            icon: Icon(Icons.emoji_emotions_outlined),
-            label: "Diário do medo",
+            icon: Icon(FontAwesomeIcons.skull),
+            label: 'Diário do medo',
           ),
           BottomNavigationBarItem(
             icon: Icon(Icons.calendar_today_outlined),

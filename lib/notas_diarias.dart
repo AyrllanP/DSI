@@ -7,6 +7,7 @@ import 'notas_diarias_page.dart';
 import 'package:projeto_dsi/mapas.dart';
 import 'package:projeto_dsi/diario_medo.dart';
 import 'package:projeto_dsi/habitos.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 
 class NotasDiariaPage extends StatefulWidget {
   @override
@@ -14,47 +15,22 @@ class NotasDiariaPage extends StatefulWidget {
 }
 
 class _NotasDiariaPageState extends State<NotasDiariaPage> {
-  DateTime _selectedDate = DateTime.now();
-  late String _formattedDate;
-  bool _isDateSelected = false;
   final String? userEmail = FirebaseAuth.instance.currentUser?.email;
+  String _keyword = ""; 
+  bool _isSearching = false;
 
-  @override
-  void initState() {
-    super.initState();
-    _formattedDate = DateFormat('MMM yyyy').format(_selectedDate);
-  }
-
-  void _adicionarNota(BuildContext context) {
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => EditarNotaPage(),
-      ),
-    );
-  }
-
-  Future<void> _pickDate() async {
-    final DateTime? picked = await showDatePicker(
-      context: context,
-      initialDate: _selectedDate,
-      firstDate: DateTime(2000),
-      lastDate: DateTime(2101),
-    );
-
-    if (picked != null && picked != _selectedDate) {
-      setState(() {
-        _selectedDate = picked;
-        _formattedDate = DateFormat('MMM yyyy').format(_selectedDate);
-        _isDateSelected = true;
-      });
-    }
-  }
-
-  void _removerFiltros() {
+  void _updateKeyword(String keyword) {
     setState(() {
-      _isDateSelected = false;
-      _formattedDate = DateFormat('MMM yyyy').format(DateTime.now());
+      _keyword = keyword;
+    });
+  }
+
+  void _toggleSearch() {
+    setState(() {
+      _isSearching = !_isSearching;
+      if (!_isSearching) {
+        _updateKeyword(""); 
+      }
     });
   }
 
@@ -85,9 +61,25 @@ class _NotasDiariaPageState extends State<NotasDiariaPage> {
 
   void _logout() async {
     await FirebaseAuth.instance.signOut();
-    Navigator.pushReplacementNamed(
-        context, '/login'); // Navega de volta para a página de login
+    Navigator.pushReplacementNamed(context, '/login');
   }
+
+  // Lista de emojis e cores
+  final List<IconData> _emojis = [
+    Icons.sentiment_dissatisfied,
+    Icons.sentiment_satisfied,
+    Icons.sentiment_very_dissatisfied,
+    Icons.sentiment_neutral,
+    Icons.sentiment_very_satisfied,
+  ];
+
+  final List<Color> _emojiColors = [
+    Colors.red.shade300,
+    Colors.green.shade300,
+    Colors.red.shade900,
+    Colors.blue.shade300,
+    Colors.green.shade800,
+  ];
 
   @override
   Widget build(BuildContext context) {
@@ -100,40 +92,47 @@ class _NotasDiariaPageState extends State<NotasDiariaPage> {
             Icons.person,
             color: Colors.black,
           ),
-          onPressed: (){
+          onPressed: () {
             Navigator.push(
-              context, 
+              context,
               MaterialPageRoute(builder: (context) => TelaPerfil()),
-              );
+            );
           },
         ),
         centerTitle: true,
-        title: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            IconButton(
-              icon: Icon(Icons.arrow_left, color: Colors.black),
-              onPressed: () {},
-            ),
-            Text(
-              _formattedDate,
-              style:
-                  TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
-            ),
-            IconButton(
-              icon: Icon(Icons.arrow_right, color: Colors.black),
-              onPressed: () {},
-            ),
-          ],
-        ),
+        title: _isSearching
+            ? Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Expanded(
+                    child: TextField(
+                      decoration: InputDecoration(
+                        hintText: 'Pesquisar por palavra-chave...',
+                        border: InputBorder.none,
+                      ),
+                      onChanged: _updateKeyword, 
+                    ),
+                  ),
+                ],
+              )
+            : Text(
+                'Notas Diárias',
+                style: TextStyle(
+                  color: Colors.black,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
         actions: [
           IconButton(
-            icon: Icon(Icons.close, color: Colors.black),
-            onPressed: _removerFiltros,
+            icon: Icon(
+              _isSearching ? Icons.close : Icons.search, 
+              color: Colors.black,
+            ),
+            onPressed: _toggleSearch, 
           ),
           IconButton(
-            icon: Icon(Icons.logout, color: Colors.black), // Ícone de logout
-            onPressed: _logout, // Função de logout
+            icon: Icon(Icons.logout, color: Colors.black),
+            onPressed: _logout,
           ),
         ],
       ),
@@ -155,13 +154,40 @@ class _NotasDiariaPageState extends State<NotasDiariaPage> {
             );
           }
 
-          final notas = snapshot.data!.docs;
+          // Filtra os documentos localmente com base na palavra-chave
+          final notas = snapshot.data!.docs.where((doc) {
+            final titulo = doc['titulo']?.toString().toLowerCase() ?? '';
+            final conteudo = doc['nota']?.toString().toLowerCase() ?? '';
+            return titulo.contains(_keyword.toLowerCase()) ||
+                   conteudo.contains(_keyword.toLowerCase());
+          }).toList();
+
+          // Ordena as notas pela data de criação (mais recente primeiro)
+          notas.sort((a, b) {
+            final Timestamp? dataA = a['dataCriacao'] as Timestamp?;
+            final Timestamp? dataB = b['dataCriacao'] as Timestamp?;
+            if (dataA == null || dataB == null) return 0; 
+            return dataB.compareTo(dataA); 
+          });
+
+          if (notas.isEmpty) {
+            return Center(
+              child: Text(
+                'Nenhum resultado encontrado.',
+                style: TextStyle(color: Colors.black45, fontSize: 16),
+              ),
+            );
+          }
 
           return ListView.builder(
             padding: const EdgeInsets.all(8.0),
             itemCount: notas.length,
             itemBuilder: (context, index) {
               final nota = notas[index];
+              final emojiIndex = nota['emojiSelecionado'] ?? 0;
+              final emoji = _emojis[emojiIndex];
+              final emojiColor = _emojiColors[emojiIndex];
+
               return Dismissible(
                 key: Key(nota.id),
                 direction: DismissDirection.endToStart,
@@ -177,20 +203,17 @@ class _NotasDiariaPageState extends State<NotasDiariaPage> {
                     builder: (BuildContext context) {
                       return AlertDialog(
                         title: const Text("Confirmar exclusão"),
-                        content:
-                            Text("Tem certeza que deseja excluir esta nota?"),
+                        content: Text("Tem certeza que deseja excluir esta nota?"),
                         actions: [
                           Row(
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
                               TextButton(
-                                onPressed: () =>
-                                    Navigator.of(context).pop(false),
+                                onPressed: () => Navigator.of(context).pop(false),
                                 child: const Text("Não"),
                               ),
                               TextButton(
-                                onPressed: () =>
-                                    Navigator.of(context).pop(true),
+                                onPressed: () => Navigator.of(context).pop(true),
                                 child: const Text("Sim"),
                               ),
                             ],
@@ -206,6 +229,11 @@ class _NotasDiariaPageState extends State<NotasDiariaPage> {
                 child: Card(
                   margin: const EdgeInsets.symmetric(vertical: 8.0),
                   child: ListTile(
+                    leading: Icon(
+                      emoji,
+                      color: emojiColor,
+                      size: 36,
+                    ),
                     title: Text(nota['titulo'] ?? 'Sem título'),
                     subtitle: Text(nota['nota'] ?? 'Sem conteúdo'),
                     trailing: Text(
@@ -234,12 +262,14 @@ class _NotasDiariaPageState extends State<NotasDiariaPage> {
         },
       ),
       floatingActionButton: FloatingActionButton(
-        onPressed: () => _adicionarNota(context),
+        onPressed: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (context) => EditarNotaPage()),
+          );
+        },
         backgroundColor: Colors.purple,
-        child: const Icon(
-          Icons.add,
-          color: Colors.white,
-        ),
+        child: const Icon(Icons.add, color: Colors.white),
       ),
       bottomNavigationBar: BottomNavigationBar(
         type: BottomNavigationBarType.fixed,
@@ -249,12 +279,21 @@ class _NotasDiariaPageState extends State<NotasDiariaPage> {
         onTap: _onItemTapped,
         items: [
           BottomNavigationBarItem(
-              icon: Icon(Icons.note), label: 'Notas diárias'),
+            icon: Icon(Icons.note),
+            label: 'Notas diárias',
+          ),
           BottomNavigationBarItem(
-              icon: Icon(Icons.person_outline), label: 'Diário do medo'),
+            icon: Icon(FontAwesomeIcons.skull),
+            label: 'Diário do medo',
+          ),
           BottomNavigationBarItem(
-              icon: Icon(Icons.calendar_today), label: 'Hábitos'),
-          BottomNavigationBarItem(icon: Icon(Icons.map), label: 'Maps'),
+            icon: Icon(Icons.calendar_today),
+            label: 'Hábitos',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.map),
+            label: 'Maps',
+          ),
         ],
       ),
     );
