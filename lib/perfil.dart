@@ -1,24 +1,9 @@
-import 'dart:async';
-
-import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-
-Future<void> main() async {
-  WidgetsFlutterBinding.ensureInitialized();
-  await Firebase.initializeApp();
-  runApp(MyApp());
-}
-
-class MyApp extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    return MaterialApp(
-      debugShowCheckedModeBanner: false,
-      home: TelaPerfil(),
-    );
-  }
-}
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:fl_chart/fl_chart.dart';
+import 'package:intl/intl.dart'; 
+import 'habitos.dart';
 
 class TelaPerfil extends StatefulWidget {
   @override
@@ -28,17 +13,37 @@ class TelaPerfil extends StatefulWidget {
 class _TelaPerfilState extends State<TelaPerfil> {
   final FirebaseAuth _auth = FirebaseAuth.instance;
   User? _user;
-  final TextEditingController _novaSenhaController = TextEditingController();
-  final TextEditingController _senhaAtualController = TextEditingController();
+  Map<int, int> _emojiCounts = {}; 
+
+  // Para monitoramento de humor
+  final List<IconData> _emojis = [
+    Icons.sentiment_dissatisfied,
+    Icons.sentiment_satisfied,
+    Icons.sentiment_very_dissatisfied,
+    Icons.sentiment_neutral,
+    Icons.sentiment_very_satisfied,
+  ];
+
+  final List<Color> _emojiColors = [
+    Colors.red.shade300,
+    Colors.green.shade300,
+    Colors.red.shade900,
+    Colors.blue.shade300,
+    Colors.green.shade800,
+  ];
+
+  Map<String, bool> _habitosStatus = {}; // Armazenar hábitos dos ultimos 7 dias para monitoramento de hábitos
 
   @override
   void initState() {
     super.initState();
     _carregarUsuario();
+    _carregarDadosEmojis();
+    _carregarStatusHabitos();
   }
 
   void _carregarUsuario() async {
-    await Future.delayed(Duration(seconds: 2)); // Garante que o Firebase inicializou
+    await Future.delayed(Duration(seconds: 2));
     User? user = _auth.currentUser;
     setState(() {
       _user = user;
@@ -46,51 +51,92 @@ class _TelaPerfilState extends State<TelaPerfil> {
     print('Usuário logado: ${_user?.email}');
   }
 
-  void _alterarSenha() async {
-    if (_novaSenhaController.text.isEmpty || _senhaAtualController.text.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Por favor, preencha todos os campos')),
-      );
-      return;
+  // Para monitoramento de humor
+  void _carregarDadosEmojis() async {
+    final userEmail = _auth.currentUser?.email;
+    if (userEmail == null) return;
+
+    final querySnapshot = await FirebaseFirestore.instance
+        .collection('notas')
+        .where('emailUsuario', isEqualTo: userEmail)
+        .get();
+
+    final emojiCounts = <int, int>{};
+    for (int i = 0; i < _emojis.length; i++) {
+      emojiCounts[i] = 0; 
     }
 
-    try {
-      print('Reautenticando usuário...');
-      print('Reautenticando com email: ${_user!.email} e senha: ${_senhaAtualController.text}');
-
-      // Reautenticar o usuário
-      AuthCredential credential = EmailAuthProvider.credential(
-        email: _user!.email!,
-        password: _senhaAtualController.text,
-      );
-      await _user!.reauthenticateWithCredential(credential);
-      print('Reautenticação bem-sucedida.');
-
-      // Alterar a senha
-      print('Alterando senha...');
-      print('Nova senha: ${_novaSenhaController.text}');
-      await _user!.updatePassword(_novaSenhaController.text);
-      print('Senha alterada com sucesso.');
-
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Senha alterada com sucesso!')),
-      );
-
-      // Limpar os campos após a alteração da senha
-      _senhaAtualController.clear();
-      _novaSenhaController.clear();
-    } on FirebaseAuthException catch (e) {
-      print('Erro ao alterar senha: ${e.code} - ${e.message}');
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Erro ao alterar senha: ${e.message}')),
-      );
-    } catch (e) {
-      print('Erro desconhecido: $e');
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Erro desconhecido: $e')),
-      );
+    for (final doc in querySnapshot.docs) {
+      final emojiIndex = doc['emojiSelecionado'] ?? 0;
+      if (emojiCounts.containsKey(emojiIndex)) {
+        emojiCounts[emojiIndex] = (emojiCounts[emojiIndex] ?? 0) + 1;
+      }
     }
+
+    setState(() {
+      _emojiCounts = emojiCounts;
+    });
   }
+
+  // Para monitorar hábito dos ultimos 7 dias
+  void _carregarStatusHabitos() async {
+  final userEmail = _auth.currentUser?.email;
+  if (userEmail == null) return;
+
+  final DateTime now = DateTime.now();
+  final DateTime startDate = now.subtract(Duration(days: 6));
+
+  final querySnapshot = await FirebaseFirestore.instance
+      .collection('Habitos')
+      .doc(_auth.currentUser!.uid)
+      .collection('usuario_habitos')
+      .get();
+
+  final Map<String, bool> habitosStatus = {};
+
+  for (int i = 0; i < 7; i++) {
+    final DateTime date = startDate.add(Duration(days: i));
+    final String dateKey = DateFormat('yyyy-MM-dd').format(date);
+
+    final List<Habito> habitosDoDia = [];
+
+    for (final doc in querySnapshot.docs) {
+      final Habito habito = Habito.fromFirestore(doc);
+      if (_deveRealizarHabitoNoDia(habito, date)) {
+        habitosDoDia.add(habito);
+      }
+    }
+
+    bool todosConcluidos = true;
+    for (final habito in habitosDoDia) {
+      if (!habito.statusDiario.containsKey(dateKey) || !habito.statusDiario[dateKey]!) {
+        todosConcluidos = false;
+        break;
+      }
+    }
+
+    habitosStatus[dateKey] = todosConcluidos;
+  }
+
+  setState(() {
+    _habitosStatus = habitosStatus;
+  });
+}
+
+bool _deveRealizarHabitoNoDia(Habito habito, DateTime date) {
+  if (habito.frequencia == "Todos os dias") {
+    return true;
+  } else if (habito.dias != null) {
+    final String diaSemana = _obterDiaSemana(date);
+    return habito.dias!.contains(diaSemana);
+  }
+  return false;
+}
+
+String _obterDiaSemana(DateTime date) {
+  List<String> diasSemana = ["dom", "seg", "ter", "qua", "qui", "sex", "sáb"];
+  return diasSemana[date.weekday % 7];
+}
 
   @override
   Widget build(BuildContext context) {
@@ -104,82 +150,202 @@ class _TelaPerfilState extends State<TelaPerfil> {
         ),
         title: Text(
           "Perfil",
-            style: TextStyle(
-              fontFamily: 'Poppins',
-              fontSize: 20,
-              fontWeight: FontWeight.bold,
-              color: Colors.black,
-            ),
-          )
-,
+          style: TextStyle(
+            fontFamily: 'Poppins',
+            fontSize: 20,
+            fontWeight: FontWeight.bold,
+            color: Colors.black,
+          ),
+        ),
         centerTitle: true,
       ),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            CircleAvatar(
-              radius: 50,
-              backgroundImage: NetworkImage(
-                'https://picsum.photos/150', // Link alternativo
-              ),
-              onBackgroundImageError: (exception, stackTrace) {
-                print('Erro ao carregar a imagem: $exception');
-              },
-              child: Text('Erro ao carregar'), // Texto exibido em caso de erro
-            ),
-            SizedBox(height: 20),
-            TextField(
-              decoration: InputDecoration(
-                labelText: 'Nome',
-                border: OutlineInputBorder(),
-              ),
-              readOnly: true,
-              controller: TextEditingController(text: _user?.displayName ?? 'Nome não disponível'),
-            ),
-            SizedBox(height: 20),
-            TextField(
-              decoration: InputDecoration(
-                labelText: 'E-mail',
-                border: OutlineInputBorder(),
-              ),
-              readOnly: true,
-              controller: TextEditingController(text: _user?.email ?? 'Email não disponível'),
-            ),
-            SizedBox(height: 10),
-            TextField(
-              decoration: InputDecoration(
-                labelText: 'Senha Atual',
-                border: OutlineInputBorder(),
-              ),
-              obscureText: true,
-              controller: _senhaAtualController,
-            ),
-            SizedBox(height: 10),
-            TextField(
-              decoration: InputDecoration(
-                labelText: 'Nova Senha',
-                border: OutlineInputBorder(),
-              ),
-              obscureText: true,
-              controller: _novaSenhaController,
-            ),
-            SizedBox(height: 40),
-            ElevatedButton(
-              onPressed: _alterarSenha,
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.purple,
-                foregroundColor: Colors.white,
-                padding: EdgeInsets.symmetric(horizontal: 20, vertical: 20),
-                shape: RoundedRectangleBorder( // Borda arredondada
-                  borderRadius: BorderRadius.circular(10), // Raio da borda
+      body: Container(
+        color: Colors.purple.shade50,
+        width: double.infinity,
+        height: double.infinity,
+        child: SingleChildScrollView(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Center(
+                child: Padding(
+                  padding: const EdgeInsets.only(top: 20),
+                  child: CircleAvatar(
+                    radius: 50,
+                    backgroundColor: Colors.purple,
+                    child: Icon(
+                      Icons.person,
+                      size: 60,
+                      color: Colors.purple.shade50,
+                    ),
+                  ),
                 ),
               ),
-              child: Text('Alterar Senha'),
-            ),
-          ],
+              Padding(
+                
+                padding: const EdgeInsets.fromLTRB(16.0, 20, 16.0, 0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    SizedBox(height: 5),
+                    Text(
+                        'Informações do usuário',
+                      style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.purple,
+                      ),
+                    ),
+                    SizedBox(height: 5),
+                    Text(
+                      'Nome de usuário:',
+                      style: TextStyle(
+                        fontSize: 16,
+                        color: Colors.black,
+                      ),
+                    ),
+                    SizedBox(height: 5),
+                    Text(
+                      _user?.displayName ?? 'Usuário',
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    SizedBox(height: 20),
+                    Text(
+                      'Email:',
+                      style: TextStyle(
+                        fontSize: 16,
+                        color: Colors.black,
+                      ),
+                    ),
+                    SizedBox(height: 5),
+                    Text(
+                      _user?.email ?? 'email@usuario.com',
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Text(
+                  'Monitoramento de Hábitos',
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.purple,
+                  ),
+                ),
+              ),
+              _buildHabitosStatus(),
+              Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Text(
+                  'Monitoramento de Humor',
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.purple,
+                  ),
+                ),
+              ),
+              Container(
+                height: 200,
+                padding: const EdgeInsets.all(16.0),
+                child: BarChart(
+                  BarChartData(
+                    barGroups: List.generate(_emojis.length, (index) {
+                      return BarChartGroupData(
+                        x: index,
+                        barRods: [
+                          BarChartRodData(
+                            toY: _emojiCounts[index]?.toDouble() ?? 0.0,
+                            color: Colors.purple, // Mantém as barras roxas
+                            width: 16,
+                          ),
+                        ],
+                      );
+                    }),
+                    titlesData: FlTitlesData(
+                      bottomTitles: AxisTitles(
+                        sideTitles: SideTitles(
+                          showTitles: true,
+                          getTitlesWidget: (value, meta) {
+                            final index = value.toInt();
+                            return Icon(
+                              _emojis[index],
+                              color: _emojiColors[index],
+                            );
+                          },
+                        ),
+                      ),
+                      leftTitles: AxisTitles(
+                        sideTitles: SideTitles(
+                          showTitles: true,
+                          getTitlesWidget: (value, meta) {
+                            return Text(
+                              value.toInt().toString(),
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: Colors.black,
+                              ),
+                            );
+                          },
+                        ),
+                      ),
+                    ),
+                    borderData: FlBorderData(show: false),
+                    gridData: FlGridData(show: false),
+                  ),
+                ),
+              ),
+              
+            ],
+          ),
         ),
+      ),
+    );
+  }
+
+  Widget _buildHabitosStatus() {
+    final DateTime now = DateTime.now();
+    final DateTime startDate = now.subtract(Duration(days: 6));
+
+    return Container(
+      padding: const EdgeInsets.all(16.0),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceAround,
+        children: List.generate(7, (index) {
+          final DateTime date = startDate.add(Duration(days: index));
+          final String dateKey = DateFormat('yyyy-MM-dd').format(date);
+          final bool status = _habitosStatus[dateKey] ?? false;
+
+          return Column(
+            children: [
+              Container(
+                width: 20,
+                height: 20,
+                decoration: BoxDecoration(
+                  color: status ? Colors.lightGreenAccent : Colors.redAccent,
+                  shape: BoxShape.circle,
+                ),
+              ),
+              SizedBox(height: 5),
+              Text(
+                DateFormat('dd/MM').format(date),
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ],
+          );
+        }),
       ),
     );
   }
