@@ -216,14 +216,34 @@ class _DiarioMedoPageState extends State<DiarioMedoPage> {
                       color: Colors.red,
                       size: 30,
                     ),
-                    title: Text(medo['medo'] ?? 'Sem título'),
+                    title: Text(
+                      medo['medo'] ?? 'Sem título',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      ),
                     subtitle: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text('Preocupação: ${medo['preocupacao'] ?? 'Nenhuma'}'),
-                        Text('Prevenir: ${medo['prevenir'] ?? 'Nenhuma'}'),
-                        Text('Corrigir: ${medo['corrigir'] ?? 'Nenhuma'}'),
-                        Text('Benefícios: ${medo['beneficios'] ?? 'Sem benefício'}'),
+                        Text(
+                          'Preocupação: ${medo['preocupacao'] ?? 'Nenhuma'}',
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          ),
+                        Text(
+                          'Prevenir: ${medo['prevenir'] ?? 'Nenhuma'}',
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          ),
+                        Text(
+                          'Corrigir: ${medo['corrigir'] ?? 'Nenhuma'}',
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          ),
+                        Text(
+                          'Benefícios: ${medo['beneficios'] ?? 'Sem benefício'}',
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          ),
                       ],
                     ),
                     onTap: () {

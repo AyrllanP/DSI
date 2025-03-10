@@ -234,8 +234,16 @@ class _NotasDiariaPageState extends State<NotasDiariaPage> {
                       color: emojiColor,
                       size: 36,
                     ),
-                    title: Text(nota['titulo'] ?? 'Sem título'),
-                    subtitle: Text(nota['nota'] ?? 'Sem conteúdo'),
+                    title: Text(
+                      nota['titulo'] ?? 'Sem título',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      ),
+                    subtitle: Text(
+                      nota['nota'] ?? 'Sem conteúdo',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      ),
                     trailing: Text(
                       nota['dataCriacao'] != null
                           ? DateFormat('dd/MM/yyyy').format(

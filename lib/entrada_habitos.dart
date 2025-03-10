@@ -58,6 +58,7 @@ class _EntradaHabitosPageState extends State<EntradaHabitosPage> {
         padding: const EdgeInsets.all(16.0),
         child: Column(
           children: [
+            const SizedBox(height: 40),
             // Nome do hábito
             TextField(
               controller: _habitoController,
@@ -66,7 +67,7 @@ class _EntradaHabitosPageState extends State<EntradaHabitosPage> {
                 border: OutlineInputBorder(),
               ),
             ),
-            const SizedBox(height: 20),
+            const SizedBox(height: 30),
 
             // Descrição do hábito
             TextField(
@@ -76,7 +77,7 @@ class _EntradaHabitosPageState extends State<EntradaHabitosPage> {
                 border: OutlineInputBorder(),
               ),
             ),
-            const SizedBox(height: 20),
+            const SizedBox(height: 30),
 
             // Frequência do hábito
             DropdownButtonFormField<String>(
@@ -130,7 +131,10 @@ class _EntradaHabitosPageState extends State<EntradaHabitosPage> {
                                   _diasSelecionados.add(dia);
                                 } else {
                                   ScaffoldMessenger.of(context).showSnackBar(
-                                    SnackBar(content: Text("Você só pode escolher $maxDiasPermitidos dia(s).")),
+                                    SnackBar(
+                                      content: Text("Você só pode escolher $maxDiasPermitidos dia(s)."),
+                                      backgroundColor: Colors.red
+                                      ),
                                   );
                                 }
                               }

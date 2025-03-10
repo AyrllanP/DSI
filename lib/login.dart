@@ -87,7 +87,8 @@ class _LoginPageState extends State<LoginPage> {
       body: 
        Column(
         children: [
-          Expanded(
+          SizedBox(
+            height: 430,
             child: Center(
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,

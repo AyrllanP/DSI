@@ -120,71 +120,50 @@ class _MedoPageState extends State<MedoPage> {
       appBar: AppBar(
         title: Text(_isEditMode ? 'Editar Medo' : 'Novo Medo'),
       ),
-      body: SingleChildScrollView(
-        child: Padding(
-          padding: EdgeInsets.only(top: 50),
-          child: Column(
-            children: [
-              // Primeira caixa com o ícone e a cor vermelha
-              _buildInputCard("DESCREVA SEU MEDO:", "Descreva seu medo ...",
-                  _medoController,
-                  isRed: true),
-
-              // Outras caixas com fundo cinza e o mesmo espaçamento
-              SizedBox(height: 10), // Espaçamento entre as caixas
-              _buildInputCard(
-                  "IDENTIFIQUE SUA PREOCUPAÇÃO:",
-                  "Do que você tem medo que pode acontecer...",
-                  _preocupacaoController,
-                  isGray: true),
-              SizedBox(height: 10), // Espaçamento entre as caixas
-              _buildInputCard(
-                  "COMO PREVENIR:",
-                  "O que você pode fazer para evitar que sua preocupação aconteça...",
-                  _prevenirController,
-                  isGray: true),
-              SizedBox(height: 10), // Espaçamento entre as caixas
-              _buildInputCard(
-                  "COMO CORRIGIR:",
-                  "O que você pode fazer se sua preocupação realmente acontecer...",
-                  _corrigirController,
-                  isGray: true),
-              SizedBox(height: 10), // Espaçamento entre as caixas
-              _buildInputCard(
-                  "QUAIS OS BENEFÍCIOS DO SUCESSO:",
-                  "O que vai acontecer de bom quando você superar o medo...",
-                  _beneficiosController,
-                  isGray: true),
-
-              SizedBox(height: 20),
-
-              // Botões de ação
-              // Botões de ação
-              Padding(
-                padding: EdgeInsets.symmetric(horizontal: 30, vertical: 20),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    // Botão 'X' (fechar)
-                    FloatingActionButton(
-                      onPressed: () => Navigator.pop(context),
-                      backgroundColor: Colors.black,
-                      child: Icon(Icons.close, color: Colors.white),
-                    ),
-
-                    // Botão 'V' (salvar)
-                    FloatingActionButton(
-                      onPressed: _salvarMedo,
-                      backgroundColor: Colors.black,
-                      child: Icon(Icons.check, color: Colors.white),
-                    ),
-                  ],
-                ),
+      body: Column(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween, // Distribui espaço entre os elementos
+        children: [
+          Expanded(
+            child: SingleChildScrollView(
+              padding: EdgeInsets.only(top: 50),
+              child: Column(
+                children: [
+                  _buildInputCard("DESCREVA SEU MEDO:", "Descreva seu medo ...", _medoController, isRed: true),
+                  SizedBox(height: 10),
+                  _buildInputCard("IDENTIFIQUE SUA PREOCUPAÇÃO:", "Do que você tem medo que pode acontecer...", _preocupacaoController, isGray: true),
+                  SizedBox(height: 10),
+                  _buildInputCard("COMO PREVENIR:", "O que você pode fazer para evitar que sua preocupação aconteça...", _prevenirController, isGray: true),
+                  SizedBox(height: 10),
+                  _buildInputCard("COMO CORRIGIR:", "O que você pode fazer se sua preocupação realmente acontecer...", _corrigirController, isGray: true),
+                  SizedBox(height: 10),
+                  _buildInputCard("QUAIS OS BENEFÍCIOS DO SUCESSO:", "O que vai acontecer de bom quando você superar o medo...", _beneficiosController, isGray: true),
+                ],
               ),
-            ],
+            ),
           ),
-        ),
+
+          // Alinhando os botões ao final da página
+          Padding(
+            padding: EdgeInsets.symmetric(horizontal: 30, vertical: 20),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                FloatingActionButton(
+                  onPressed: () => Navigator.pop(context),
+                  backgroundColor: Colors.black,
+                  child: Icon(Icons.close, color: Colors.white),
+                ),
+                FloatingActionButton(
+                  onPressed: _salvarMedo,
+                  backgroundColor: Colors.black,
+                  child: Icon(Icons.check, color: Colors.white),
+                ),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }
+
 }
