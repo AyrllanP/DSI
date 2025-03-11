@@ -85,7 +85,8 @@ class _CadastroPageState extends State<CadastroPage> {
       body: 
       Column(
         children: [
-          Expanded(
+          SizedBox(
+            height: 370,
             child: Center(
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,

@@ -414,8 +414,12 @@ class _HabitosPageState extends State<HabitosPage> {
             const SizedBox(height: 16),
           // Crud - Ler
           Expanded(
-            child: _habitos.isEmpty
-                ? Center(child: CircularProgressIndicator())
+            child: _getHabitosDoDiaSelecionado().isEmpty
+                ? Center(
+                    child: Text(
+                      "Nenhum hábito cadastrado neste dia",
+                    ),
+                  )
                 : ListView.builder(
                     itemCount: _getHabitosDoDiaSelecionado().length,
                     itemBuilder: (context, index) {
