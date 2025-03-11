@@ -119,6 +119,7 @@ class _MedoPageState extends State<MedoPage> {
       backgroundColor: Colors.white,
       appBar: AppBar(
         title: Text(_isEditMode ? 'Editar Medo' : 'Novo Medo'),
+        automaticallyImplyLeading: false,
       ),
       body: Column(
         mainAxisAlignment: MainAxisAlignment.spaceBetween, // Distribui espaço entre os elementos

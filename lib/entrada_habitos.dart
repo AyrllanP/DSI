@@ -50,10 +50,11 @@ class _EntradaHabitosPageState extends State<EntradaHabitosPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      // appBar: AppBar(
-      //   title: Text(widget.habito == null ? "Criar Hábito" : "Editar Hábito"),
-      //   backgroundColor: Colors.white,
-      // ),
+      appBar: AppBar(
+        title: Text(widget.habito == null ? "Criar Hábito" : "Editar Hábito"),
+        backgroundColor: Colors.white,
+        automaticallyImplyLeading: false,
+      ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(
